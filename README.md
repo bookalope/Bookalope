@@ -1,4 +1,4 @@
-# Bookalope
+<img src="https://bookalope.net/img/bookalope-logo.png" width="50%" alt="Bookalope Logo">
 
 ## What is Bookalope?
 

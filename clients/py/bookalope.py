@@ -98,13 +98,13 @@ class BookalopeClient(object):
         else:
             host = "bookflow.bookalope.net"
         connection = http.client.HTTPSConnection(host)
+        if self.__netdbg:
+            connection.set_debuglevel(1)
         if headers:
             headers.update(self.__headers())
         else:
             headers = self.__headers()
         connection.request(method, url, body, headers)
-        if self.__netdbg:
-            connection.set_debuglevel(1)
         return connection.getresponse()
 
     def __headers(self):

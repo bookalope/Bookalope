@@ -77,7 +77,6 @@ class BookalopeClient(object):
             hex(id(self)),
             json.dumps({
                 "token": self.__token,
-                "api-host": "{}:{}".format(self.__connection.host, self.__connection.port),
                 }))
         return repr_s
 

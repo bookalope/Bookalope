@@ -446,7 +446,8 @@ class Book(object):
         """
         Create or initialize a new Book instance. The new Book instance is created
         on the Bookalope server and this instance is initialized with the new
-        data. Note that the default book name is set to '<none>'.
+        data. Note that the default book name is set to '<none>', and an empty
+        bookflow will be created for this book as well.
 
         :param bookalope: A Bookalope instance.
         :param str id_or_packed: None to create a new Book instance; a valid
@@ -591,7 +592,11 @@ class Bookflow(object):
         """
         Create or initialize a new Bookflow instance. The new bookflow is created
         on the Bookalope server side, and this Bookflow instance is then initialized
-        from the new bookflow data.
+        from the new bookflow data. If a valid bookflow id is given, the new
+        Bookflow instance is initialized from that existing bookflow.
+
+        Note: initialization does not update the bookflow's metadata; instead
+              call update() manually. This is to prevent too many server requests.
 
         :param bookalope: A Bookalope instance.
         :param book: A Book instance for which this bookflow is created.
@@ -623,6 +628,7 @@ class Bookflow(object):
         self.__book = book
         self.__url = "/api/books/{}/bookflows/{}".format(self.__book.id, self.__id)
         # Metadata that can be modified.
+        # TODO: Consider update() here to pull in server data.
         self.__title = None
         self.__author = None
         self.__copyright = None
@@ -645,9 +651,16 @@ class Bookflow(object):
         Queries the Bookalope server for this Bookflow's server-side data, and
         updates this instance with that data.
         """
-        bookflow = self.__bookalope.http_get(self.url)
+        bookflow = self.__bookalope.http_get(self.url)["bookflow"]
         self.__name = bookflow["name"]
         self.__step = bookflow["step"]
+        self.__title = bookflow["title"]
+        self.__author = bookflow["author"]
+        self.__copyright = bookflow["copyright"]
+        self.__isbn = bookflow["isbn"]
+        self.__language = bookflow["language"]
+        self.__pubdate = bookflow["pubdate"]
+        self.__publisher = bookflow["publisher"]
 
     def save(self):
         """Post this Bookflow's instance data to the Bookalope server."""

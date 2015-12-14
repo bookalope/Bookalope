@@ -49,7 +49,9 @@ class BookalopeClient(object):
 
         :raises TokenError: If the given token is an invalid Bookalope token.
         """
-        self.token = token
+        self.__token = None
+        if token is not None:
+            self.token = token
         if beta_host:
             self.__host = "https://beta.bookalope.net"
         else:

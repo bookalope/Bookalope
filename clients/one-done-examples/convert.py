@@ -48,7 +48,7 @@ def main():
         bookflow.author = args.author
         bookflow.save()
 
-    # We skip the book cover and let Bookalope generate one. Just upload he
+    # We skip the book cover and let Bookalope generate one. Just upload the
     # manuscript document.
     print("Uploading document...")
     with open(args.document, "rb") as doc:

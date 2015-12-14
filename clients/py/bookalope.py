@@ -55,7 +55,7 @@ class BookalopeClient(object):
         if beta_host:
             self.__host = "https://beta.bookalope.net"
         else:
-            self.__host = "http://localhost:6543" #"https://bookflow.bookalope.net"
+            self.__host = "https://bookflow.bookalope.net"
         self.__version = version
 
     def __repr__(self):

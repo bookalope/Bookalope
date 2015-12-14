@@ -667,7 +667,7 @@ class Bookflow(object):
         params = {
             "name": self.__name,
             }
-        params.update({ k:v for k,v in metadata().items() if v is not None })
+        params.update({ k:v for k,v in self.metadata().items() if v is not None })
         return self.__bookalope.http_post(self.url, params)
 
     def delete(self):

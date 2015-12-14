@@ -7,8 +7,7 @@ import base64
 import json
 import re
 import datetime
-import http.client
-import urllib.parse
+import requests
 import babel
 
 def _is_token(token_s):
@@ -34,18 +33,6 @@ class TokenError(Exception):
         super().__init__(message)
 
 
-class BookalopeHTTPError(Exception):
-    """
-    A BookalopeHTTPError is raised when the Bookalope server answers with an
-    unsuccessful status code. Please consult the API documentation for the exact
-    meaning of the status code wrt. an API call.
-    """
-    def __init__(self, response):
-        assert isinstance(response, http.client.HTTPResponse)
-        message = "Status code {}: {}".format(response.status, response.reason)
-        super().__init__(message)
-
-
 class BookalopeClient(object):
     """
     The Bookalope client provides direct access to the Bookalope server and its
@@ -65,9 +52,11 @@ class BookalopeClient(object):
         if token is not None and not _is_token(token):
             raise TokenError(token)
         self.__token = token
-        self.__beta_host = beta_host
+        if beta_host:
+            self.__host = "https://beta.bookalope.net"
+        else:
+            self.__host = "http://localhost:6543" #"https://bookflow.bookalope.net"
         self.__version = version
-        self.__netdbg = False
 
     def __repr__(self):
         """Return a printable representation of this instance."""
@@ -77,63 +66,15 @@ class BookalopeClient(object):
             hex(id(self)),
             json.dumps({
                 "token": self.__token,
+                "server": self.__host,
                 }))
         return repr_s
 
-    def __make_request(self, method, url, body=None, headers=None):
-        """
-        Make an HTTP request to Bookalope (beta or production) and return the
-        response to the caller.
-
-        :param str method: one of GET, POST, DELETE.
-        :param str url: the URL of the service endpoint.
-        :param str body: The body for the request, usually a JSON string.
-        :param dict headers: A dictionary of HTTP header/value pairs.
-        :return: the HTTPResponse object.
-
-        See also Python's http.client.HTTPConnection.request()
-        """
-        if self.__beta_host:
-            host = "beta.bookalope.net"
-        else:
-            host = "bookflow.bookalope.net"
-        connection = http.client.HTTPSConnection(host)
-        if self.__netdbg:
-            connection.set_debuglevel(1)
-        if headers:
-            headers.update(self.__headers())
-        else:
-            headers = self.__headers()
-        connection.request(method, url, body, headers)
-        return connection.getresponse()
-
-    def __headers(self):
-        """
-        Returns a dictionary of HTTP request headers for use by __make_request().
-        The 'Authorization' header uses the Bookalope token for Basic Auth of
-        the request.
-
-        :returns dict: Returns a dictionary of HTTP header/value pairs for
-                       Basic authentication with the Bookalope server.
-
-        :raises TokenError: If the Bookalope instance has no correct token string.
-        """
-        if not self.__token:
-            raise TokenError()
-        username = self.__token
-        password = ""
-        basic_auth_str = "{}:{}".format(username, password)
-        base64_auth_str = base64.b64encode(basic_auth_str.encode())
-        return {
-            "Authorization": "Basic {}".format(base64_auth_str.decode()),
-            "Accept": "application/json",
-            }
-
     def http_get(self, url, params=None):
         """
-        Perform an HTTP GET request using the __make_request() function. If the
-        response content type is JSON then this function returns whatever object
-        was encoded in JSON; if the response contains an attachment then this
+        Perform an HTTP GET request to the Bookalope server. If the response
+        content type is JSON then this function returns whatever object was
+        encoded in JSON; if the response contains an attachment then this
         function returns that attachment as a byte array.
 
         :param str url: The URL string of the service endpoint.
@@ -146,26 +87,20 @@ class BookalopeClient(object):
                  OK (200) or if the response contained unexpected header/body
                  data.
         """
-        method = "GET"
-        if params:
-            url = url + "?" + urllib.parse.urlencode(params)
-        response = self.__make_request(method, url)
-        if response.status == http.client.OK:
-            content_type = response.getheader("Content-Type")
-            if content_type == "application/json; charset=UTF-8":
-                body = response.read()
-                return json.loads(body.decode())
-            content_disposition = response.getheader("Content-Disposition")
-            if content_disposition.startswith("attachment"):
-                body = response.read()
-                return body
-        raise BookalopeHTTPError(response)
+        response = requests.get(self.__host + url, params=params, auth=(self.token, ""))
+        if response.status_code == requests.codes.ok:
+            if response.headers["Content-Type"] == "application/json; charset=UTF-8":
+                return response.json()
+            if response.headers["Content-Disposition"].startswith("attachment"):
+                return response.content
+        response.raise_for_status()
+        assert not "Implement: missed a success code"
 
     def http_post(self, url, params):
         """
-        Perform an HTTP POST request using the __make_request() function. A
-        response may or may not contain a body, so this function returns either
-        whatever object was encoded in JSON; or None.
+        Perform an HTTP POST request to the Bookalope server. A response may or
+        may not contain a body, so this function returns either whatever object
+        was encoded in JSON; or None.
 
         :param str url: The URL string of the service endpoint.
         :param dict params: An optional dictionary of param/value pairs that will
@@ -177,34 +112,29 @@ class BookalopeClient(object):
                  OK (200) or if the response contained unexpected header/body
                  data.
         """
-        method = "POST"
-        body = json.dumps(params)
-        header = {
-            "Content-Type": "application/json; charset=UTF-8",
-            }
-        response = self.__make_request(method, url, body, header)
-        if response.status in [http.client.OK, http.client.CREATED]:
-            body = response.read().decode()
-            if body:
+        response = requests.post(self.__host + url, json=params, auth=(self.token, ""))
+        if response.status_code in [requests.codes.ok, requests.codes.created]:
+            if int(response.headers["Content-Length"]):
                 # TODO: Check that Content-Type is JSON?
-                return json.loads(body)
+                return response.json()
             else:
                 return None
-        raise BookalopeHTTPError(response)
+        response.raise_for_status()
+        assert not "Implement: missed a success code"
 
     def http_delete(self, url):
         """
-        Perform an HTTP DELETE request using the __make_request() function.
+        Perform an HTTP DELETE request to the Bookalope server.
 
         :param str url: The URL of the service endpoint.
         :returns: None
         :raises:
         """
-        method = "DELETE"
-        response = self.__make_request(method, url)
-        if response.status == http.client.NO_CONTENT:
+        response = requests.delete(self.__host + url, auth=(self.token, ""))
+        if response.status_code == requests.codes.no_content:
             return None
-        raise BookalopeHTTPError(response)
+        response.raise_for_status()
+        assert not "Implement: missed a success code"
 
     @property
     def token(self):

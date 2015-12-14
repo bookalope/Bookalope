@@ -13,14 +13,14 @@ import babel
 def _is_token(token_s):
     """
     Given a string, returns True if the string contains a Bookalope token, or
-    False otherwise. A Bookalope token contains 32 lower-case alpha-numeric
-    characters, i.e. must match the regular expression [0-9a-z]{32}.
+    False otherwise. A Bookalope token contains 32 lower-case hex characters,
+    i.e. must match the regular expression [0-9a-f]{32}.
 
     :param str token_s: The string to be checked.
 
     :returns bool: True if the string is a valid Bookalope token, False otherwise.
     """
-    return re.fullmatch(r"^[0-9a-z]{32}$", token_s or "") is not None
+    return re.fullmatch(r"^[0-9a-f]{32}$", token_s or "") is not None
 
 
 class TokenError(Exception):

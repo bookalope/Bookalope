@@ -109,8 +109,7 @@ class BookalopeClient(object):
         :returns: Depending on the response, either a dictionary or None.
 
         :raises: An HTTP exception if the server responded with anything but
-                 OK (200) or if the response contained unexpected header/body
-                 data.
+                 OK (200) or CREATED (201).
         """
         response = requests.post(self.__host + url, json=params, auth=(self.token, ""))
         if response.status_code in [requests.codes.ok, requests.codes.created]:
@@ -127,8 +126,11 @@ class BookalopeClient(object):
         Perform an HTTP DELETE request to the Bookalope server.
 
         :param str url: The URL of the service endpoint.
+
         :returns: None
-        :raises:
+
+        :raises: An HTTP exception if the server responded with anything but
+                 NO CONTENT (204).
         """
         response = requests.delete(self.__host + url, auth=(self.token, ""))
         if response.status_code == requests.codes.no_content:

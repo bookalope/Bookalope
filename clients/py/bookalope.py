@@ -797,7 +797,7 @@ class Bookflow(object):
         params = {
             "name": name,
             "filename": image_filename,
-            "file": base64.b64encode(image_bytes),
+            "file": base64.b64encode(image_bytes).decode(),
         }
         return self.__bookalope.http_post(self.url + "/files/image", params)
 

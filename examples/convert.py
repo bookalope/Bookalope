@@ -25,8 +25,9 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("token", help="")
     parser.add_argument("document", help="")
-    parser.add_argument("--title", dest="title", default=None, help="")
-    parser.add_argument("--author", dest="author", default=None, help="")
+    parser.add_argument("--title", dest="title", default=None, help="The title of the book.")
+    parser.add_argument("--author", dest="author", default=None, help="The book author's name.")
+    parser.add_argument("--cover", dest="cover", default=None, help="Cover image file.")
     args = parser.parse_args()
 
     # Create a new Bookalope client to communicate with the server.
@@ -48,12 +49,18 @@ def main():
         bookflow.author = args.author
         bookflow.save()
 
-    # We skip the book cover and let Bookalope generate one. Just upload the
-    # manuscript document.
+    # Upload the manuscript document.
     print("Uploading document...")
     with open(args.document, "rb") as doc:
         _, fname = os.path.split(doc.name)
         bookflow.set_document(fname, doc.read())
+
+    # If specified, upload the cover image for the book.
+    if args.cover:
+        print("Uploading cover image...")
+        with open(args.cover, "rb") as cover:
+            _, fname = os.path.split(cover.name)
+            bookflow.set_cover_image(fname, cover.read())
 
     # Convert and download the document. For every format that we download we
     # use the 'default' styling, and we download the 'test' version to avoid

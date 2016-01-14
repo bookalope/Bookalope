@@ -22,8 +22,8 @@ token, and I<< <filename> >> the document that's to be converted.
 
 =cut
 
-my $author = 'Test Author';
-my $title = 'Test';
+my $author = 'Author';
+my $title = 'Title';
 my $cover;
 GetOptions(
     'author=s' => \$author,
@@ -41,9 +41,10 @@ sub make_request {
     my ($method, $url, $params) = @_;
 
     my $ua = LWP::UserAgent->new;
+    # $ua->timeout(600);
+
     my $request;
     my $response;
-
     $request = HTTP::Request->new($method => 'https://bookflow.bookalope.net' . $url);
     $request->header('content-type' => 'application/json');
     $request->authorization_basic($token, '');
@@ -62,7 +63,7 @@ sub make_request {
         }
         return;
     }
-    die 'HTTP response error ' . $response->code;
+    die 'HTTP response error ' . $response->code . ': ' . $response->message;
 }
 
 sub get_request {
@@ -81,19 +82,19 @@ sub delete_request {
 }
 
 # Base URL for the API.
-my $api = '/api/';
+my $api = '/api';
 
-# Create a new book.
+# Create a new book with an empty bookflow.
 my $api_books = "$api/books";
 my $book = post_request($api_books, {'name' => $title});
 my $book_id = $book->{'book'}{'id'};
-say 'Created new book ' . $book_id;
+my $bookflow = $book->{'book'}{'bookflows'}[0];
+my $bookflow_id = $bookflow->{'id'};
+say 'Created new book ' . $book_id . ' with bookflow ' . $bookflow_id;
 
-# Create a new bookflow for the new book.
-my $api_bookflows = "$api/books/$book_id/bookflows";
-my $bookflow = post_request($api_bookflows, {'name' => 'Bookflow 1', 'title' => $title});
-my $bookflow_id = $bookflow->{'bookflow'}{'id'};
-say 'Created new bookflow ' . $bookflow_id;
+# Set author and title for this bookflow.
+my $api_bookflows = "$api/books/$book_id/bookflows/$bookflow_id";
+post_request($api_bookflows, {'name' => 'Bookflow 1', 'title' => $title, 'author' => $author});
 
 # Upload the document.
 say 'Uploading document...';

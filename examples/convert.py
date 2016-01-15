@@ -35,13 +35,13 @@ def main():
     b_client = bookalope.BookalopeClient()
     b_client.token = args.token
 
-    # To convert a document, we create a new Book first and then a Bookflow for
-    # that book.  A bookflow is a single conversion of a document.  Having
-    # multiple bookflows per books allows us to handle multiple manuscript
-    # iterations of the same book.
+    # To convert a document, we create a new Book first with an empty Bookflow.
+    # A bookflow is a single conversion of a document.  Having multiple
+    # bookflows per books allows us to handle multiple manuscript iterations of
+    # the same book.
     print("Creating new book and bookflow...")
     book = b_client.create_book()
-    bookflow = book.create_bookflow()
+    bookflow = book.bookflows[0]
 
     # Set title and author for this bookflow, and save.
     if args.title or args.author:

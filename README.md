@@ -6,11 +6,11 @@
 
 Once a document is uploaded to the server, Bookalope's work flow is divided into three steps:
 
- - **Document analysis and content extraction.** Where Bookalope determines the structure of a document. Based on the results of this analysis, Bookalope then extracts the text contend from the uploaded document, and structures it into an internal format. 
+ - **Document analysis and content extraction.** Where Bookalope determines the structure of a document. Based on the results of this analysis, Bookalope then extracts the text contend from the uploaded document, and structures it into an internal format.
 
  - **Content checking and fixes.** Where Bookalope checks the structured text contend for a large number of spelling, punctuation, and typographical problems. They are flagged, and the user may choose to correct them.
 
- - **Conversion and download.** Where Bookalope generates a number of other file formats for electronic and print publication (EPUB2+3, MOBI, PDF) as well as conversion for continued editing and design (ICML, DOCX). Bookalope generates Table of Contents, links footnotes, adjust images, and much more. By design, Bookalope produces target file formats that validate against various industry standards. 
+ - **Conversion and download.** Where Bookalope generates a number of other file formats for electronic and print publication (EPUB2+3, MOBI, PDF) as well as conversion for continued editing and design (ICML, DOCX). Bookalope generates Table of Contents, links footnotes, adjust images, and much more. By design, Bookalope produces target file formats that validate against various industry standards.
 
 This work flow is not one-directional; instead, the user can move seamlessly forth and back between structuring a document, checking its content, and generating target files.
 
@@ -34,7 +34,7 @@ The REST API can be accessed directly through command-line tools like [curl](htt
 
 ### Object Model for Language Integration
 
-To make the use of the REST API more comfortable, language specific wrappers provide a simple object-oriented model. This object model defines the following classes: 
+To make the use of the REST API more comfortable, language specific wrappers provide a simple object-oriented model. This object model defines the following classes:
 
 **BookalopeClient:** The BookalopeClient class is the main interface to Bookalope, and handles authentication and direct access to the API server. All other classes require a BookalopeClient instance to operate. Other than for testing purposes, a user should never have to use a BookalopeClient instance's methods directly.
 
@@ -53,3 +53,4 @@ Bookalope's object model is *lazy* in a sense that the user may change the prope
 | Language | Wrapper and documentation |
 |----------|---------------------------|
 | Python 3 | [Source code](https://github.com/jenstroeger/Bookalope/blob/master/clients/py/bookalope.py) and example [convert.py](https://github.com/jenstroeger/Bookalope/blob/master/examples/convert.py) |
+| PHP5     | [Source code](https://github.com/jenstroeger/Bookalope/blob/master/clients/php/bookalope.php) and example [convert.php](https://github.com/jenstroeger/Bookalope/blob/master/examples/convert.php) |

@@ -238,6 +238,7 @@ class Profile(object):
         result = self.__bookalope.http_get("/api/profile")
         self.__firstname = result["user"]["firstname"]
         self.__lastname = result["user"]["lastname"]
+        return None
 
     def save(self):
         """
@@ -430,6 +431,7 @@ class Book(object):
         self.__name = book["name"]
         bookflows = book["bookflows"]
         self.__bookflows = [Bookflow(self.__bookalope, self, _) for _ in bookflows]
+        return None
 
     def save(self):
         """
@@ -593,6 +595,7 @@ class Bookflow(object):
         self.__language = bookflow["language"]
         self.__pubdate = bookflow["pubdate"]
         self.__publisher = bookflow["publisher"]
+        return None
 
     def save(self):
         """Post this Bookflow's instance data to the Bookalope server."""
@@ -817,6 +820,7 @@ class Bookflow(object):
         :param str document_filename: The file name of the document.
         :param document_bytes: A byte array containing the document.
         """
+        # TODO: Check that bytes are not of an unsupported format.
         params = {
             "filetype": "doc",
             "filename": document_filename,

@@ -2,6 +2,7 @@
 
 ini_set("display_errors", 1);
 ini_set("display_startup_errors", 1);
+// ini_set("allow_url_include", 1);
 error_reporting(E_ALL);
 assert_options(ASSERT_BAIL, TRUE);
 
@@ -10,6 +11,7 @@ assert_options(ASSERT_BAIL, TRUE);
 // run server side as the action of a <form> submit.
 
 include "bookalope.php";
+// include "https://cdn.rawgit.com/jenstroeger/Bookalope/master/clients/php/bookalope.php";
 
 // In case of an error, this will hold the error message;
 $error_message = FALSE;

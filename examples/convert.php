@@ -3,7 +3,7 @@
 ini_set("display_errors", 1);
 ini_set("display_startup_errors", 1);
 error_reporting(E_ALL);
-assert_options(ASSERT_BAIL);
+assert_options(ASSERT_BAIL, TRUE);
 
 // Example of how to use the Bookalope classes, a wrapper and simple object model
 // for the Bookalope REST API. Please read the commented code. This is meant to

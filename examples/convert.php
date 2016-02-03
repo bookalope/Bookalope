@@ -1,0 +1,155 @@
+<?php
+
+ini_set("display_errors", 1);
+ini_set("display_startup_errors", 1);
+error_reporting(E_ALL);
+assert_options(ASSERT_BAIL);
+
+// Example of how to use the Bookalope classes, a wrapper and simple object model
+// for the Bookalope REST API. Please read the commented code. This is meant to
+// run server side as the action of a <form> submit.
+
+include "bookalope.php";
+
+// In case of an error, this will hold the error message;
+$error_message = FALSE;
+
+// Sanitize the form input.
+$post_title = filter_var($_POST["title"], FILTER_SANITIZE_STRING);
+$post_author = filter_var($_POST["author"], FILTER_SANITIZE_STRING);
+$post_docfname = filter_var($_FILES["docfile"]["name"], FILTER_SANITIZE_STRING);
+$post_docerr = $_FILES["docfile"]["error"];
+
+// Create a new Bookalope client to communicate with the server.
+error_log("Creating Bookalope client...");
+$b_token = "enter-your-private-token-here";
+$b_client = new BookalopeClient;
+$b_client->set_token($b_token);
+
+// Server failures or wrapper problems cause a BookalopeException, which we catch
+// here and handle at the end.
+try {
+
+    // Do nothing if there was a problem with the file upload.
+    if ($post_docerr !== UPLOAD_ERR_OK) {
+        $errors = array(
+            UPLOAD_ERR_OK => NULL,
+            UPLOAD_ERR_INI_SIZE => "The uploaded file exceeds the upload_max_filesize directive in php.ini.",
+            UPLOAD_ERR_FORM_SIZE => "The uploaded file exceeds the MAX_FILE_SIZE directive that was specified in the HTML form.",
+            UPLOAD_ERR_PARTIAL => "The uploaded file was only partially uploaded.",
+            UPLOAD_ERR_NO_FILE => "No file was uploaded.",
+            UPLOAD_ERR_NO_TMP_DIR => "Missing a temporary folder.",
+            UPLOAD_ERR_CANT_WRITE => "Failed to write file to disk.",
+            UPLOAD_ERR_EXTENSION => "A PHP extension stopped the file upload.",
+            );
+        throw new BookalopeException($errors[$post_docerr]);
+    }
+
+    // To convert a document, we create a new book first and then a bookflow for
+    // that book. A bookflow is a single conversion of a document. Having
+    // multiple bookflows per books allows us to handle multiple manuscript
+    // iterations of the same book.
+    error_log("Creating new book and bookflow...");
+    $book = $b_client->create_book();
+    $bookflow = $book->bookflows[0];
+
+    // Set title and author for this bookflow, and save.
+    if (!empty($post_title)) {
+        $bookflow->title = $post_title;
+    }
+    if (!empty($post_author)) {
+        $bookflow->author = $post_author;
+    }
+    $bookflow->save();
+
+    // Upload the manuscript document. We skip the book cover and let Bookalope
+    // generate one.
+    error_log("Uploading document...");
+    $docfname = $_FILES["docfile"]["tmp_name"];
+    $docf = file_get_contents($docfname);
+    if ($docf === FALSE) {
+        throw new BookalopeError("Failed to open and read document.");
+    }
+    $bookflow->set_document($post_docfname, $docf);
+
+    // Create a temporary folder and download all generated files into it. Then
+    // zip that folder and return it as a response.
+    $tmpdname = sys_get_temp_dir() . uniqid("bookalope");
+    if (mkdir($tmpdname, 0700)) {
+
+        // Convert and download the document. For every format that we download we
+        // use the 'default' styling, and we download the 'test' version to avoid
+        // charges to our credit card.
+        $format_names = array("epub", "epub3", "mobi", "pdf", "icml", "docx");
+        foreach ($format_names as $format) {
+            error_log("Converting and downloading " . $format . "...");
+
+            // Get the Style instance for the default styling. Bookalope should
+            // always provide such a default styling, so we will assume here that
+            // it does.
+            $styles = $b_client->get_styles($format);
+            foreach ($styles as $style) {
+                if ($style->short_name === "default") {
+                    $default_style = $style;
+                    break;
+                }
+            }
+
+            // Convert the document using the default styling.
+            $converted_bytes = $bookflow->convert($format, $default_style, "test");
+
+            // Save the converted document.
+            $tmpfname = $bookflow->id . "." . $format;
+            if (file_put_contents($tmpdname . DIRECTORY_SEPARATOR . $tmpfname, $converted_bytes) === FALSE) {
+                // throw new BookalopeException("Failed to write converted document.");
+                error_log("Error writing generated " . $format . " file, skipping.");
+            }
+        }
+
+        // Zip all generated files into an archive for download.
+        $zipfname = sys_get_temp_dir() . $bookflow->id . ".zip";
+        $zip = new ZipArchive;
+        $zip->open($zipfname, ZipArchive::CREATE);
+        foreach (glob($tmpdname . DIRECTORY_SEPARATOR . $bookflow->id . ".*") as $fname) {
+            $zip->addFile($fname, basename($fname));
+        }
+        // $zip->addGlob($tmpdname . DIRECTORY_SEPARATOR . $bookflow->id . ".*", 0, array("remove_all_path" => TRUE));
+        $zip->close();
+
+        // Remove the temporary folder. (Assumes the 'rm' command.)
+        system("rm -rf " . escapeshellarg($tmpdname));
+
+        // Delete the book and all of its bookflows.
+        error_log("Deleting book and all bookflows...");
+        $book->delete();
+
+        // Return the archive as a response.
+        // http_response_code(200);
+        header("HTTP/1.1 200 OK");
+        header("Content-Description: File Transfer");
+        header("Content-Type: application/octet-stream");
+        header("Content-Disposition: attachment; filename=\"" . basename($zipfname) . "\"");
+        header("Content-Transfer-Encoding: binary");
+        readfile($zipfname);
+        unlink($zipfname);
+        exit;
+    }
+    else {
+        throw new BookalopeException("Failed to create temporary folder.");
+    }
+}
+catch (BookalopeTokenException $e) {
+    $error_message = $e->getMessage();
+    error_log("BookalopeTokenException: " . $error_message);
+}
+catch (BookalopeException $e) {
+    $error_message = $e->getMessage();
+    error_log("BookalopeException: " . $error_message);
+}
+
+// http_response_code(500);
+header("HTTP/1.1 500 Internal Server Error");
+header('Content-Type: application/json');
+echo json_encode(array("error", $error_message));
+
+?>

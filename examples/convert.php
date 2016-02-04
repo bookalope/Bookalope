@@ -22,15 +22,15 @@ $post_author = filter_var($_POST["author"], FILTER_SANITIZE_STRING);
 $post_docfname = filter_var($_FILES["docfile"]["name"], FILTER_SANITIZE_STRING);
 $post_docerr = $_FILES["docfile"]["error"];
 
-// Create a new Bookalope client to communicate with the server.
-error_log("Creating Bookalope client...");
-$b_token = "enter-your-private-token-here";
-$b_client = new BookalopeClient;
-$b_client->set_token($b_token);
-
 // Server failures or wrapper problems cause a BookalopeException, which we catch
 // here and handle at the end.
 try {
+
+    // Create a new Bookalope client to communicate with the server.
+    error_log("Creating Bookalope client...");
+    $b_token = "enter-your-private-token-here";
+    $b_client = new BookalopeClient;
+    $b_client->set_token($b_token);
 
     // Do nothing if there was a problem with the file upload.
     if ($post_docerr !== UPLOAD_ERR_OK) {

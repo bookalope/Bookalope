@@ -14,7 +14,7 @@ class BookalopeException extends Exception { }
 // or an ill-formatted one is given.
 class BookalopeTokenException extends BookalopeException {
     public function __construct($token) {
-        $this.super("Malformed Bookalope token: " . $token);
+        parent::__construct("Malformed Bookalope token: " . $token);
     }
 }
 

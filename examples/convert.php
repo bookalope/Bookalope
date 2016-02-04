@@ -151,7 +151,7 @@ catch (BookalopeException $e) {
 
 // http_response_code(500);
 header("HTTP/1.1 500 Internal Server Error");
-header('Content-Type: application/json');
+header("Content-Type: application/json");
 echo json_encode(array("error", $error_message));
 
 ?>

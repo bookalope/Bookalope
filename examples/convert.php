@@ -26,12 +26,6 @@ $post_docerr = $_FILES["docfile"]["error"];
 // here and handle at the end.
 try {
 
-    // Create a new Bookalope client to communicate with the server.
-    error_log("Creating Bookalope client...");
-    $b_token = "enter-your-private-token-here";
-    $b_client = new BookalopeClient;
-    $b_client->set_token($b_token);
-
     // Do nothing if there was a problem with the file upload.
     if ($post_docerr !== UPLOAD_ERR_OK) {
         $errors = array(
@@ -46,6 +40,12 @@ try {
             );
         throw new BookalopeException($errors[$post_docerr]);
     }
+
+    // Create a new Bookalope client to communicate with the server.
+    error_log("Creating Bookalope client...");
+    $b_token = "enter-your-private-token-here";
+    $b_client = new BookalopeClient;
+    $b_client->set_token($b_token);
 
     // To convert a document, we create a new book first and then a bookflow for
     // that book. A bookflow is a single conversion of a document. Having

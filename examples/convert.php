@@ -13,6 +13,14 @@ assert_options(ASSERT_BAIL, TRUE);
 include "bookalope.php";
 // include "https://cdn.rawgit.com/jenstroeger/Bookalope/master/clients/php/bookalope.php";
 
+// Helper function that gets the system's temp directory without a trailing separator,
+// guaranteed. PHP does not handle this consistently across platforms, see here:
+// http://php.net/manual/en/function.sys-get-temp-dir.php#80690
+function get_tmp_dir() {
+    $tmpdir = sys_get_temp_dir();
+    return rtrim($tmpdir, DIRECTORY_SEPARATOR);
+}
+
 // In case of an error, this will hold the error message;
 $error_message = FALSE;
 
@@ -76,7 +84,7 @@ try {
 
     // Create a temporary folder and download all generated files into it. Then
     // zip that folder and return it as a response.
-    $tmpdname = sys_get_temp_dir() . uniqid("bookalope");
+    $tmpdname = get_tmp_dir() . DIRECTORY_SEPARATOR . uniqid("bookalope");
     if (mkdir($tmpdname, 0700)) {
 
         // Convert and download the document. For every format that we download we
@@ -109,7 +117,7 @@ try {
         }
 
         // Zip all generated files into an archive for download.
-        $zipfname = sys_get_temp_dir() . $bookflow->id . ".zip";
+        $zipfname = get_tmp_dir() . DIRECTORY_SEPARATOR . $bookflow->id . ".zip";
         $zip = new ZipArchive;
         $zip->open($zipfname, ZipArchive::CREATE);
         foreach (glob($tmpdname . DIRECTORY_SEPARATOR . $bookflow->id . ".*") as $fname) {

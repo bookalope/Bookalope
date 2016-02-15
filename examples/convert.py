@@ -62,10 +62,14 @@ def main():
             _, fname = os.path.split(cover.name)
             bookflow.set_cover_image(fname, cover.read())
 
+    # Get a list of all supported export file name extensions. Bookalope accepts
+    # them as arguments to specify the target file format for conversion.
+    formats = [fext for format_ in b_client.get_export_formats() for fext in format_.file_exts]
+
     # Convert and download the document. For every format that we download we
     # use the 'default' styling, and we download the 'test' version to avoid
     # charges to our credit card.
-    for format_ in ["epub", "epub3", "mobi", "pdf", "icml", "docx"]:
+    for format_ in formats:
         print("Converting and downloading " + format_ + "...")
 
         # Get the Style instance for the default styling.

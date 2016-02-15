@@ -87,10 +87,19 @@ try {
     $tmpdname = get_tmp_dir() . DIRECTORY_SEPARATOR . uniqid("bookalope");
     if (mkdir($tmpdname, 0700)) {
 
+        // Get a list of all supported export file name extensions. Bookalope
+        // accepts them as arguments to specify the target file format for
+        // conversion.
+        $format_names = array();
+        foreach ($b_client->get_export_formats() as $format) {
+            foreach ($format->file_exts as $fext) {
+                $format_names[] = $fext;
+            }
+        }
+
         // Convert and download the document. For every format that we download we
         // use the 'default' styling, and we download the 'test' version to avoid
         // charges to our credit card.
-        $format_names = array("epub", "epub3", "mobi", "pdf", "icml", "docx");
         foreach ($format_names as $format) {
             error_log("Converting and downloading " . $format . "...");
 

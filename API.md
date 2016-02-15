@@ -567,6 +567,89 @@ Post an image with the given name or id for the bookflow. The only image current
 
 ### Conversion and Download
 
+`GET https://bookflow.bookalope.net/api/formats`
+
+Get a list of supported import and export file formats. The returned list contains (M, E) tuples where M is the supported mime type and E is a list of file extensions for the mime type.
+
+**Parameters**: n/a
+
+    ~ > http --auth token: --verbose GET https://bookflow.bookalope.net/api/formats
+    GET /api/formats HTTP/1.1
+    Accept: application/json
+    Accept-Encoding: gzip, deflate
+    Authorization: Basic token
+    Connection: keep-alive
+    Host: bookflow.bookalope.net
+    User-Agent: HTTPie/0.9.2
+
+    HTTP/1.1 200 OK
+    Content-Length: 1932
+    Content-Type: application/json; charset=UTF-8
+    Date: Sun, 14 Feb 2016 22:53:31 GMT
+    Server: nginx/1.9.7
+    
+    {
+        "formats": {
+            "export": [
+                {
+                    "exts": [
+                        "epub",
+                        "epub3"
+                    ],
+                    "mime": "application/epub+zip"
+                },
+                {
+                    "exts": [
+                        "mobi"
+                    ],
+                    "mime": "application/vnd.amazon.ebook"
+                },
+                {
+                    "exts": [
+                        "pdf"
+                    ],
+                    "mime": "application/pdf"
+                },
+                {
+                    "exts": [
+                        "icml"
+                    ],
+                    "mime": "application/xml"
+                },
+                {
+                    "exts": [
+                        "docx"
+                    ],
+                    "mime": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                }
+            ],
+            "import": [
+                {
+                    "exts": [
+                        "dot",
+                        "dotx",
+                        "docx",
+                        "dotm",
+                        "doc",
+                        "docm"
+                    ],
+                    "mime": "application/msword"
+                },
+                {
+                    "exts": [
+                        "tsv",
+                        "csv",
+                        "tab",
+                        "txt"
+                    ],
+                    "mime": "text/plain"
+                },
+                
+                ...
+            ]
+        }
+    }
+
 `GET https://bookflow.bookalope.net/api/styles`
 
 Get information about the available visual styles for one or for all target book formats.

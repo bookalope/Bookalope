@@ -180,6 +180,26 @@ class BookalopeClient(object):
         styles = self.http_get("/api/styles", params)["styles"]
         return [Style(format_, _) for _ in styles]
 
+    def get_export_formats(self):
+        """
+        Query the Bookalope server for all available export file formats.
+
+        :returns list: Returns a list of Format instances, each of which describes
+                       a supported export file format.
+        """
+        formats = self.http_get("/api/formats")["formats"]
+        return [Format(format_) for format_ in formats["export"]]
+
+    def get_import_formats(self):
+        """
+        Query the Bookalope server for all available import file formats.
+
+        :returns list: Returns a list of Format instances, each of which describes
+                       a supported import file format.
+        """
+        formats = self.http_get("/api/formats")["formats"]
+        return [Format(format_) for format_ in formats["import"]]
+
     def get_books(self):
         """
         Queries the Bookalope server for all books associated with the user.
@@ -290,6 +310,56 @@ class Profile(object):
         :param str name: The new last name.
         """
         self.__lastname = name
+
+
+class Format(object):
+    """
+    A Format instance describes a file format that Bookalope supports either as
+    import or export file format. It contains the mime type of the supported file
+    format, and a list of file name extensions.
+    """
+
+    def __init__(self, packed):
+        """
+        Initialize this Format instance from a dictionary of a packed Format.
+
+        :param dict packed: A dictionary containing packed Format information.
+        """
+        self.__mime = packed["mime"]
+        self.__file_extensions = packed["exts"]
+
+    def __repr__(self):
+        """Return a printable representation of this instance."""
+        repr_s = "<{}.{} object at {}> JSON: {}".format(
+            self.__class__.__module__,
+            self.__class__.__name__,
+            hex(id(self)),
+            json.dumps(self.pack()))
+        return repr_s
+
+    def pack(self):
+        """
+        Pack this instance data into a dictionary that can be encoded as a JSON
+        string and is compatible to the Bookalope Format data.
+
+        :returns dict: This Format's information as a Bookalope compatible
+                       dictionary.
+        """
+        packed = {
+            "mime": self.__mime,
+            "exts": self.__file_extensions,
+            }
+        return packed
+
+    @property
+    def mimetype(self):
+        """Return the mime type of this format."""
+        return self.__mime
+
+    @property
+    def file_exts(self):
+        """Return a list of file extensions for this file format."""
+        return self.__file_extensions
 
 
 class Style(object):

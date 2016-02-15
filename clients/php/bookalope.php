@@ -129,6 +129,26 @@ class BookalopeClient {
         return $this->token;
     }
 
+    // Return a list of supported export file formats.
+    public function get_export_formats() {
+        $formats = $this->http_get("/api/formats")->formats;
+        $formats_list = array();
+        foreach ($formats->export as $format) {
+            $formats_list[] = new Format($format);
+        }
+        return $formats_list;
+    }
+
+    // Return a list of supported import file formats.
+    public function get_import_formats() {
+        $formats = $this->http_get("/api/formats")->formats;
+        $formats_list = array();
+        foreach ($formats->import as $format) {
+            $formats_list[] = new Format($format);
+        }
+        return $formats_list;
+    }
+
     // Return a list of available Styles for the given file format, or NULL if
     // if the $format was invalid.
     public function get_styles($format) {
@@ -217,13 +237,29 @@ class Style {
     public $description;
     public $api_price;
 
-    // Constructor. Initialize from a packed styles object.
+    // Constructor. Initialize from a packed style object.
     public function __construct($format, $packed) {
         $this->format = $format;
         $this->short_name = $packed->name;
         $this->name = $packed->info->name;
         $this->description = $packed->info->description;
         $this->api_price = $packed->info->{"price-api"};
+    }
+}
+
+// A Format instance describes a file format that Bookalope supports either as
+// import or export file format. It contains the mime type of the supported file
+// format, and a list of file name extensions.
+class Format {
+
+    // Public attributes of a Bookalope Format.
+    public $mime;
+    public $file_exts;
+
+    // Constructor. Initialize from a packed format object.
+    public function __construct($packed) {
+        $this->mime = $packed->mime;
+        $this->file_exts = $packed->exts;
     }
 }
 

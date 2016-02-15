@@ -40,6 +40,8 @@ To make the use of the REST API more comfortable, language specific wrappers pro
 
 **Profile:** The Profile class represents a user's profile data, i.e first and last name.
 
+**Format:** The Format class represents the file format identifiers of import and export file formats that Bookalope supports. A file format identifier contains the [mime type](http://www.iana.org/assignments/media-types/media-types.xhtml) and a list of possible file name extensions.
+ 
 **Style:** The Style class represents the visual styling information for a target document format. That styling information consists of a short and a verbose name of the style, as well as a description and the price of the style when used for a target document.
 
 **Book:** The Book class represents a single book as it is handled by Bookalope. It is a wrapper for a number of "book flows," i.e. conversion runs of different versions of the same book. All book related information like author name, title, ISBN, and so forth are part of the book flow.

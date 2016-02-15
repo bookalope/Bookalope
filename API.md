@@ -569,7 +569,7 @@ Post an image with the given name or id for the bookflow. The only image current
 
 `GET https://bookflow.bookalope.net/api/formats`
 
-Get a list of supported import and export file formats. The returned list contains (M, E) tuples where M is the supported mime type and E is a list of file extensions for the mime type.
+Get two lists of supported import and export file formats that Bookalope supports. Both import and export lists contain two-element dictionaries, where the `mime` key holds the mime type of the file format and the `exts` key holds a list of file name extensions for the file format.
 
 **Parameters**: n/a
 
@@ -600,28 +600,11 @@ Get a list of supported import and export file formats. The returned list contai
                 },
                 {
                     "exts": [
-                        "mobi"
-                    ],
-                    "mime": "application/vnd.amazon.ebook"
-                },
-                {
-                    "exts": [
-                        "pdf"
-                    ],
-                    "mime": "application/pdf"
-                },
-                {
-                    "exts": [
                         "icml"
                     ],
                     "mime": "application/xml"
                 },
-                {
-                    "exts": [
-                        "docx"
-                    ],
-                    "mime": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                }
+                ...
             ],
             "import": [
                 {
@@ -644,7 +627,6 @@ Get a list of supported import and export file formats. The returned list contai
                     ],
                     "mime": "text/plain"
                 },
-                
                 ...
             ]
         }
@@ -691,7 +673,7 @@ Get information about the available visual styles for one or for all target book
 
 Convert and download the document into a target format and styling.
 
-**Parameters**: The `format` (string) parameter determines which target format the book is to be converted into: `epub`, `epub3`, `mobi`, `pdf`, `icml`, or `docx`. The `styling` (string) parameter is optional and selects the style for the generated book; defaults to `default` which also is the only supported value at the moment. The `version` (string) parameter is optional and determines whether Bookalope generates a `test` or `final` version of the book; defaults to `test`.  
+**Parameters**: The `format` (string) parameter determines which target format the book is to be converted into. The `format` is any of the export file name extensions returned by the `api/formats` call (i.e. `epub`, `epub3`, `mobi`, `pdf`, `icml`, or `docx`). The `styling` (string) parameter is optional and selects the style for the generated book; defaults to `default` which also is the only supported value at the moment. The `version` (string) parameter is optional and determines whether Bookalope generates a `test` or `final` version of the book; defaults to `test`.  
 **Return**: The converted document.  
 **Errors**: `406` if the bookflow step is anything other than `convert`. `409` if `version=final` and the user has no billing information or if the server explicitly disallows only `final`. `500` if a credit card charge failed.
 

@@ -26,7 +26,6 @@ class BookalopeClient {
     private $token;
     private $host;
     private $version;
-    private $formats = array("epub", "epub3", "mobi", "pdf", "icml", "docx");
 
     // Constructor.
     public function __construct($token=NULL, $beta_host=FALSE, $version="v1") {
@@ -152,9 +151,6 @@ class BookalopeClient {
     // Return a list of available Styles for the given file format, or NULL if
     // if the $format was invalid.
     public function get_styles($format) {
-        if (!in_array($format, $this->formats)) {
-            return NULL;
-        }
         $params = array("format" => $format);
         $styles = $this->http_get("/api/styles", $params)->styles;
         $styles_list = array();

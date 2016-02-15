@@ -367,16 +367,13 @@ class Style(object):
     For every target file format that Bookalope generates, the user can select
     from several available design styles. This class implements a single such
     design style.
-
-    Target file formats currently supported by Bookalope are: 'epub', 'epub3',
-    'mobi', 'pdf', 'icml', 'docx'.
     """
 
     def __init__(self, format_, packed):
         """
         Initialize this Style instance from a dictionary of a packed Style.
 
-        :param bookalope: A Bookalope instance.
+        :param str format_: The file format this Style instance applies to.
         :param dict packed: A dictionary containing packed Style information.
         """
         self.__format = format_

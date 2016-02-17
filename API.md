@@ -481,7 +481,7 @@ Post the original document file for the given bookflow; if the bookflow has alre
 
 **Parameters**: `file` (string) is a base64 encoded text document. `filename` (string) is the original file name of the text document.`filetype` (string) must be one of `doc` or `gutenberg`, describing how the document file is to be interpreted by Bookalope.  
 **Return**: n/a  
-**Error**: `406` if the bookflow already contains a document, `413` if the posted document is too large (more than 12MB).
+**Error**: `406` if the bookflow already contains a document or if the file type is unsupported, `413` if the posted document is too large (more than 12MB).
 
     ~ > base64 bla.odt > bla.odt.b64
     ~ > http --auth token: --json --verbose POST https://bookflow.bookalope.net/api/books/29fdc01dddb345268400bebef45b9d9e/bookflows/36582d54166540638efc286e655fb657/files/document file=@bla.odt.b64 filename=bla.odt filetype=doc

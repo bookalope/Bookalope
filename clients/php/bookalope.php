@@ -6,6 +6,17 @@ function is_token($token) {
     return preg_match("/^[0-9a-f]{32}$/", $token) === 1;
 }
 
+// Helper function to unpack a Bookalope JSON error value returned as the body
+// of a response. This function relies on the Bookalope API to return a well-
+// formed JSON error response.
+function get_error($response) {
+    $err_obj = json_decode($response);
+    if ($err_obj !== NULL) {
+        return $err_obj->errors[0]->description;
+    }
+    return "Malformed error response from Bookalope";
+}
+
 // A BookalopeException is raised whenever an API call failed or returned an
 // unexpeced HTTP code was returned.
 class BookalopeException extends Exception { }
@@ -53,7 +64,7 @@ class BookalopeClient {
         curl_setopt($curl, CURLOPT_URL, $this->host . $url);
         curl_setopt($curl, CURLOPT_USERPWD, $this->token . ":\"\"");
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, TRUE);
-        curl_setopt($curl, CURLOPT_FAILONERROR, TRUE);
+        curl_setopt($curl, CURLOPT_FAILONERROR, FALSE);
         curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "GET");
         $response = curl_exec($curl);
         $response_info = curl_getinfo($curl);
@@ -67,7 +78,7 @@ class BookalopeClient {
             }
             throw new BookalopeException("Unexpected response content type: " . $response_info["content_type"]);
         }
-        throw new BookalopeException("Error or unhandled return code " . $response_info["http_code"]);
+        throw new BookalopeException(get_error($response));
     }
 
     // Issue an HTTP POST request to the Bookalope server and the $url endpoint.
@@ -79,7 +90,7 @@ class BookalopeClient {
         curl_setopt($curl, CURLOPT_URL, $this->host . $url);
         curl_setopt($curl, CURLOPT_USERPWD, $this->token . ":\"\"");
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, TRUE);
-        curl_setopt($curl, CURLOPT_FAILONERROR, TRUE);
+        curl_setopt($curl, CURLOPT_FAILONERROR, FALSE);
         curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "POST");
         if ($params) {
             curl_setopt($curl, CURLOPT_HTTPHEADER, array("Content-Type: application/json"));
@@ -94,7 +105,7 @@ class BookalopeClient {
             }
             return NULL;
         }
-        throw new BookalopeException("Error or unhandled return code " . $response_info["http_code"]);
+        throw new BookalopeException(get_error($response));
     }
 
     // Issue an HTTP DELETE request to the Bookalope server and the $url endpoint.
@@ -104,7 +115,7 @@ class BookalopeClient {
         curl_setopt($curl, CURLOPT_URL, $this->host . $url);
         curl_setopt($curl, CURLOPT_USERPWD, $this->token . ":\"\"");
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, TRUE);
-        curl_setopt($curl, CURLOPT_FAILONERROR, TRUE);
+        curl_setopt($curl, CURLOPT_FAILONERROR, FALSE);
         curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "DELETE");
         $response = curl_exec($curl);
         $response_info = curl_getinfo($curl);
@@ -112,7 +123,7 @@ class BookalopeClient {
         if ($response_info["http_code"] === 204) {
             return NULL;
         }
-        throw new BookalopeException("Error or unhandled return code " . $response_info["http_code"]);
+        throw new BookalopeException(get_error($response));
     }
 
     // Set the Bookalope authentication token.

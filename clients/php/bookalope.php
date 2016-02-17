@@ -2,7 +2,7 @@
 
 // Helper function that checks if a given string is a Bookalope token or id;
 // returns TRUE if it is, FALSE otherwise.
-function isToken($token) {
+function is_token($token) {
     return preg_match("/^[0-9a-f]{32}$/", $token) === 1;
 }
 
@@ -117,7 +117,7 @@ class BookalopeClient {
 
     // Set the Bookalope authentication token.
     public function set_token($token) {
-        if (!isToken($token)) {
+        if (!is_token($token)) {
             throw new BookalopeTokenException($token);
         }
         $this->token = $token;
@@ -287,7 +287,7 @@ class Book {
             $book = $this->bookalope->http_post($url, $params)->book;
         }
         else if (is_string($id_or_packed)) {
-            if (!isToken($id_or_packed)) {
+            if (!is_token($id_or_packed)) {
                 throw new BookalopeTokenException($id_or_packed);
             }
             $url = "/api/books/" . $id_or_packed;
@@ -376,7 +376,7 @@ class Bookflow {
             $bookflow = $this->bookalope->http_post($url, $params)->bookflow;
         }
         else if (is_string($id_or_packed)) {
-            if (!isToken($id_or_packed)) {
+            if (!is_token($id_or_packed)) {
                 throw new BookalopeTokenException($id_or_packed);
             }
             $url = "/api/books/" . $book->id . "/bookflows/" . $id_or_packed;

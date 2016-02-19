@@ -69,7 +69,9 @@ sub make_request {
         }
         return;
     }
-    die 'HTTP response error ' . $response->code . ': ' . $response->message;
+    my $json_err = decode_json($response->decoded_content);
+    my $err_message = $json_err->{'errors'}[0]->{'description'};
+    die 'HTTP response error ' . $response->code . ': ' . $err_message;
 }
 
 sub get_request {

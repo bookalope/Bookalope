@@ -2,6 +2,7 @@
 
 use strict;
 use warnings;
+use utf8;
 use feature qw(say);
 
 use Getopt::Long qw(GetOptions);
@@ -10,6 +11,7 @@ use JSON qw(decode_json encode_json);
 use MIME::Base64 qw(encode_base64);
 use File::Slurp qw(read_file write_file);
 use File::Basename;
+use Encode qw(decode);
 
 =head1 convert.pl
 
@@ -32,6 +34,10 @@ GetOptions(
 ) or die 'Unknown command line options';
 my $token = shift or die 'Missing command line argument: token';
 my $filename = shift or die 'Missing command line argument: filename';
+
+# Turn string arguments (which might contain utf8 encoded characters) into Perl's internal form.
+$author = decode('UTF-8', $author);
+$title = decode('UTF-8', $title);
 
 # Helper function to make an HTTP request and handle the response. If the response
 # contains a JSON encoded body, return the decoded Perl object; if the response

@@ -52,23 +52,34 @@ class BookalopeClient {
         $this->version = $version;
     }
 
+    // Private helper function that performs the actual http request, and returns
+    // the response information.
+    private function do_curl($verb, $url, $params=NULL) {
+        $curl = curl_init();
+        curl_setopt($curl, CURLOPT_URL, $this->host . $url);
+        curl_setopt($curl, CURLOPT_USERPWD, $this->token . ":\"\"");
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, TRUE);
+        curl_setopt($curl, CURLOPT_FAILONERROR, FALSE);
+        curl_setopt($curl, CURLOPT_CUSTOMREQUEST, $verb);
+        if ($params) {
+            curl_setopt($curl, CURLOPT_HTTPHEADER, array("Content-Type: application/json"));
+            curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($params));
+        }
+        $response = curl_exec($curl);
+        $response_info = curl_getinfo($curl);
+        curl_close($curl);
+        return array($response, $response_info);
+    }
+
     // Issue an HTTP GET request to the Bookalope server and the $url endpoint.
     // If a parameter array is given, URL encode it and append it to the given
     // $url. Returns a result object or download attachment, or raises a
     // BookalopeException in case of an error.
     public function http_get($url, $params=NULL) {
-        $curl = curl_init();
         if ($params) {
             $url .= "?" . http_build_query($params);
         }
-        curl_setopt($curl, CURLOPT_URL, $this->host . $url);
-        curl_setopt($curl, CURLOPT_USERPWD, $this->token . ":\"\"");
-        curl_setopt($curl, CURLOPT_RETURNTRANSFER, TRUE);
-        curl_setopt($curl, CURLOPT_FAILONERROR, FALSE);
-        curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "GET");
-        $response = curl_exec($curl);
-        $response_info = curl_getinfo($curl);
-        curl_close($curl);
+        list($response, $response_info) = $this->do_curl("GET", $url);
         if ($response_info["http_code"] === 200) {
             if ($response_info["content_type"] === "application/json; charset=UTF-8") {
                 return json_decode($response);
@@ -86,19 +97,7 @@ class BookalopeClient {
     // body of the request. Returns a created object or NULL, or raises a
     // BookalopeException in case of an error.
     public function http_post($url, $params=NULL) {
-        $curl = curl_init();
-        curl_setopt($curl, CURLOPT_URL, $this->host . $url);
-        curl_setopt($curl, CURLOPT_USERPWD, $this->token . ":\"\"");
-        curl_setopt($curl, CURLOPT_RETURNTRANSFER, TRUE);
-        curl_setopt($curl, CURLOPT_FAILONERROR, FALSE);
-        curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "POST");
-        if ($params) {
-            curl_setopt($curl, CURLOPT_HTTPHEADER, array("Content-Type: application/json"));
-            curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($params));
-        }
-        $response = curl_exec($curl);
-        $response_info = curl_getinfo($curl);
-        curl_close($curl);
+        list($response, $response_info) = $this->do_curl("POST", $url, $params);
         if ($response_info["http_code"] === 200 or $response_info["http_code"] === 201) {
             if ($response_info["content_type"] === "application/json; charset=UTF-8") {
                 return json_decode($response);
@@ -111,15 +110,7 @@ class BookalopeClient {
     // Issue an HTTP DELETE request to the Bookalope server and the $url endpoint.
     // Returns NULL or raises a BookalopeException in case of an error.
     public function http_delete($url) {
-        $curl = curl_init();
-        curl_setopt($curl, CURLOPT_URL, $this->host . $url);
-        curl_setopt($curl, CURLOPT_USERPWD, $this->token . ":\"\"");
-        curl_setopt($curl, CURLOPT_RETURNTRANSFER, TRUE);
-        curl_setopt($curl, CURLOPT_FAILONERROR, FALSE);
-        curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "DELETE");
-        $response = curl_exec($curl);
-        $response_info = curl_getinfo($curl);
-        curl_close($curl);
+        list($response, $response_info) = $this->do_curl("DELETE", $url);
         if ($response_info["http_code"] === 204) {
             return NULL;
         }

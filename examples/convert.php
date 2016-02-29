@@ -65,11 +65,13 @@ try {
 
     // Set title and author for this bookflow, and save.
     if (!empty($post_title)) {
+        $book->name = $post_title;
         $bookflow->title = $post_title;
     }
     if (!empty($post_author)) {
         $bookflow->author = $post_author;
     }
+    $book->save();
     $bookflow->save();
 
     // Upload the manuscript document. We skip the book cover and let Bookalope

@@ -20,7 +20,7 @@ def _is_token(token_s):
 
     :returns bool: True if the string is a valid Bookalope token, False otherwise.
     """
-    return re.fullmatch(r"^[0-9a-f]{32}$", token_s or "") is not None
+    return re.match(r"^[0-9a-f]{32}$", token_s or "") is not None
 
 
 class TokenError(Exception):
@@ -30,7 +30,7 @@ class TokenError(Exception):
     """
     def __init__(self, token=""):
         message = "Invalid Bookalope token: " + (token or "<not set>")
-        super().__init__(message)
+        super(TokenError, self).__init__(message)
 
 
 class BookalopeClient(object):
@@ -669,7 +669,7 @@ class Bookflow(object):
         params = {
             "name": self.__name,
             }
-        params.update({ k:v for k,v in self.metadata().items() if v is not None })
+        params.update({k:v for k, v in self.metadata().items() if v is not None})
         return self.__bookalope.http_post(self.url, params)
 
     def delete(self):

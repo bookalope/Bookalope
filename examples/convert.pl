@@ -47,7 +47,7 @@ sub make_request {
     my ($method, $url, $params) = @_;
 
     my $ua = LWP::UserAgent->new;
-    # $ua->timeout(600);
+    $ua->timeout(300);
 
     my $request;
     my $response;

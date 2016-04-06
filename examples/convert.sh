@@ -28,16 +28,16 @@ if [ `builtin type -p http` ]; then
 
     # Upload the manuscript which automatically converts it using defaults.
     base64 "$DOCFILE" > "$DOCFILE.base64"
-    http --json --auth $TOKEN: POST $APIHOST/api/books/$BOOKID/bookflows/$BOOKFLOWID/files/document file=@"$DOCFILE.base64" filename="$DOCFILE" filetype=doc
+    http --json --timeout 300 --auth $TOKEN: POST $APIHOST/api/books/$BOOKID/bookflows/$BOOKFLOWID/files/document file=@"$DOCFILE.base64" filename="$DOCFILE" filetype=doc
     echo "Uploaded document"
 
     # Download the converted results.
     echo "Downloading converted books"
-    http --download --auth $TOKEN: GET $APIHOST/api/books/$BOOKID/bookflows/$BOOKFLOWID/convert format==epub version==test
-    http --download --auth $TOKEN: GET $APIHOST/api/books/$BOOKID/bookflows/$BOOKFLOWID/convert format==mobi version==test
-    http --download --auth $TOKEN: GET $APIHOST/api/books/$BOOKID/bookflows/$BOOKFLOWID/convert format==pdf version==test
-    http --download --auth $TOKEN: GET $APIHOST/api/books/$BOOKID/bookflows/$BOOKFLOWID/convert format==icml version==test
-    http --download --auth $TOKEN: GET $APIHOST/api/books/$BOOKID/bookflows/$BOOKFLOWID/convert format==docx version==test
+    http --download --timeout 300 --auth $TOKEN: GET $APIHOST/api/books/$BOOKID/bookflows/$BOOKFLOWID/convert format==epub version==test
+    http --download --timeout 300 --auth $TOKEN: GET $APIHOST/api/books/$BOOKID/bookflows/$BOOKFLOWID/convert format==mobi version==test
+    http --download --timeout 300 --auth $TOKEN: GET $APIHOST/api/books/$BOOKID/bookflows/$BOOKFLOWID/convert format==pdf version==test
+    http --download --timeout 300 --auth $TOKEN: GET $APIHOST/api/books/$BOOKID/bookflows/$BOOKFLOWID/convert format==icml version==test
+    http --download --timeout 300 --auth $TOKEN: GET $APIHOST/api/books/$BOOKID/bookflows/$BOOKFLOWID/convert format==docx version==test
 
     # Delete the "Test" book and all of its bookflows.
     http --auth $TOKEN: DELETE $APIHOST/api/books/$BOOKID

@@ -454,7 +454,7 @@ class Bookflow {
 
     // Download the cover image as a byte array from the Bookalope server.
     public function get_cover_image() {
-        return $this->get_image("cover");
+        return $this->get_image("cover-image");
     }
 
     // Download an image with the name 'name' as a byte array from the Bookalope
@@ -468,7 +468,7 @@ class Bookflow {
 
     // Upload the cover image for this bookflow.
     public function set_cover_image($filename, $filebytes) {
-        return $this->add_image("cover", $filename, $filebytes);
+        return $this->add_image("cover-image", $filename, $filebytes);
     }
 
     // Upload an image for this bookflow using the given name.

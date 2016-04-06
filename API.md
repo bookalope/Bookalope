@@ -511,9 +511,9 @@ Post the original document file for the given bookflow; if the bookflow has alre
 
 Get the bookflow's cover image. If no cover image was provided yet, then one will be generated on the fly. This generated cover image is not stored for the bookflow.
 
-**Parameters**: `name` (string) is the name or identifier of the image; this parameter is optional and defaults to `cover`.  
-**Retrun**: The cover image.  
-**Errors**: n/a
+**Parameters**: `name` (string) is the name or identifier of the image; this parameter is optional and defaults to `'cover-image'`.  
+**Retrun**: The requested image.  
+**Errors**: `406` if the document is not in the `convert` step, or if the requested image name could not be found in the book.
 
     ~ > http --auth token: --verbose --download GET https://bookflow.bookalope.net/api/books/29fdc01dddb345268400bebef45b9d9e/bookflows/36582d54166540638efc286e655fb657/files/image
     GET /api/books/29fdc01dddb345268400bebef45b9d9e/bookflows/36582d54166540638efc286e655fb657/files/image HTTP/1.1
@@ -525,25 +525,25 @@ Get the bookflow's cover image. If no cover image was provided yet, then one wil
     User-Agent: HTTPie/0.9.2
     
     HTTP/1.1 200 OK
-    Content-Disposition: attachment; filename="36582d54166540638efc286e655fb657.png"
+    Content-Disposition: attachment; filename="36582d54166540638efc286e655fb657-cover-image.png"
     Content-Length: 16784
     Content-Type: image/png; charset=UTF-8
     Date: Mon, 21 Sep 2015 16:37:36 GMT
     Server: nginx/1.9.4
     
-    Downloading 16.39 kB to "36582d54166540638efc286e655fb657.png"
+    Downloading 16.39 kB to "36582d54166540638efc286e655fb657-cover-image.png"
     Done. 16.39 kB in 0.00058s (27.79 MB/s)
 
 `POST https://bookflow.bookalope.net/api/books/{book_id}/bookflows/{id}/files/image`
 
 Post an image with the given name or id for the bookflow. The only image currently supported is the cover image.
 
-**Parameters**: `name` (string) is the name or identifier for the image; this parameter is optional and defaults to `cover`. `file` (string) is the base64 encoded image. `filename` (string) is the original file name of the image.  
+**Parameters**: `name` (string) is the name or identifier for the image; this parameter is optional and defaults to `'cover-image'`, the book's cover image. `caption` (string) is the caption for the image; this parameter is optional and if none is given then an existing caption for the image is removed. `file` (string) is the base64 encoded image. `filename` (string) is the original file name of the image.  
 **Return**: n/a  
-**Errors**: `400` if the image is not one of the supported formats (jpg, png, gif), `413` if the posted document is too large (more than 12MB).  
+**Errors**: `400` if the image is not one of the supported formats (jpg, png, gif); `406` if the bookflow does not contain a document, or the document is not in `convert` step, or no image with the specified name existed; `413` if the posted document is too large (more than 12MB).  
 
     ~ > base64 cover.png > cover.png.b64
-    ~ > http --auth token: --json --verbose POST https://bookflow.bookalope.net/api/books/29fdc01dddb345268400bebef45b9d9e/bookflows/36582d54166540638efc286e655fb657/files/image file=@cover.png.b64 filename=cover.png
+    ~ > http --auth token: --json --verbose POST https://bookflow.bookalope.net/api/books/29fdc01dddb345268400bebef45b9d9e/bookflows/36582d54166540638efc286e655fb657/files/image file=@cover.png.b64 filename=cover.png name="cover-image"
     POST /api/books/29fdc01dddb345268400bebef45b9d9e/bookflows/36582d54166540638efc286e655fb657/files/image HTTP/1.1
     Accept: application/json
     Accept-Encoding: gzip, deflate
@@ -556,7 +556,8 @@ Post an image with the given name or id for the bookflow. The only image current
     
     {
         "file": "iVBORw0KGgoAAAANSUhEUgAAAyAAAASwCAIAAACM07nyAAAABmJLR0QA/wD/AP+gvaeTAAAgAElE\n...",
-        "filename": "cover.png"
+        "filename": "cover.png",
+        "name": "cover-image"
     }
     
     HTTP/1.1 200 OK

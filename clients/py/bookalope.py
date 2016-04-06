@@ -831,7 +831,7 @@ class Bookflow(object):
 
     def get_cover_image(self):
         """Download the cover image as a byte array from the Bookalope server."""
-        return self.get_image("cover")
+        return self.get_image("cover-image")
 
     def get_image(self, name):
         """
@@ -854,7 +854,7 @@ class Bookflow(object):
         :param str image_filename: The file name of the cover image.
         :param image_bytes: A byte array containing the image.
         """
-        return self.add_image("cover", image_filename, image_bytes)
+        return self.add_image("cover-image", image_filename, image_bytes)
 
     def add_image(self, name, image_filename, image_bytes):
         """

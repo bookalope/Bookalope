@@ -113,7 +113,7 @@ post_request($api_document, {'filetype' => 'doc', 'filename' => basename($filena
 if ($cover) {
     say 'Uploading cover image...';
     my $api_cover = "$api/books/$book_id/bookflows/$bookflow_id/files/image";
-    post_request($api_cover, {'name' => 'cover', 'filename' => basename($cover), 'file' => encode_base64(read_file($cover))});
+    post_request($api_cover, {'name' => 'cover-image', 'filename' => basename($cover), 'file' => encode_base64(read_file($cover))});
 }
 
 # Download the converted files.

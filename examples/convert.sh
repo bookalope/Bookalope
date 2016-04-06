@@ -7,6 +7,7 @@ fi
 
 TOKEN=$1
 DOCFILE=$2
+TMPDIR=$(mktemp -d)
 
 if [ ! -f "$DOCFILE" ]; then
     echo "Document $DOCFILE does not exist, exiting"
@@ -27,8 +28,8 @@ if [ `builtin type -p http` ]; then
     echo "Created new bookflow $BOOKFLOWID"
 
     # Upload the manuscript which automatically converts it using defaults.
-    base64 "$DOCFILE" > "$DOCFILE.base64"
-    http --json --timeout 300 --auth $TOKEN: POST $APIHOST/api/books/$BOOKID/bookflows/$BOOKFLOWID/files/document file=@"$DOCFILE.base64" filename="$DOCFILE" filetype=doc
+    base64 "$DOCFILE" > "$TMPDIR/$DOCFILE.base64"
+    http --json --timeout 300 --auth $TOKEN: POST $APIHOST/api/books/$BOOKID/bookflows/$BOOKFLOWID/files/document file=@"$TMPDIR/$DOCFILE.base64" filename="$DOCFILE" filetype=doc
     echo "Uploaded document"
 
     # Download the converted results.
@@ -56,10 +57,10 @@ else
         echo "Created new bookflow $BOOKFLOWID"
 
         # Upload the manuscript which automatically converts it using defaults.
-        echo '{"filetype":"doc", "filename":"'$DOCFILE'", "file":"' > "$DOCFILE.json"
-        base64 "$DOCFILE" >> "$DOCFILE.json"
-        echo '"}' >> "$DOCFILE.json"
-        curl --user $TOKEN: --header "Content-Type: application/json" --data @"$DOCFILE.json" --request POST $APIHOST/api/books/$BOOKID/bookflows/$BOOKFLOWID/files/document
+        echo '{"filetype":"doc", "filename":"'$DOCFILE'", "file":"' > "$TMPDIR/$DOCFILE.json"
+        base64 "$DOCFILE" >> "$TMPDIR/$DOCFILE.json"
+        echo '"}' >> "$TMPDIR/$DOCFILE.json"
+        curl --user $TOKEN: --header "Content-Type: application/json" --data @"$TMPDIR/$DOCFILE.json" --request POST $APIHOST/api/books/$BOOKID/bookflows/$BOOKFLOWID/files/document
 
         # Download the converted results.
         curl --user $TOKEN: --output $BOOKFLOWID.epub --request GET $APIHOST/api/books/$BOOKID/bookflows/$BOOKFLOWID/convert?format=epub\&version=test
@@ -77,4 +78,5 @@ else
         exit 1
     fi
 fi
+rm -fr $TMPDIR
 exit 0

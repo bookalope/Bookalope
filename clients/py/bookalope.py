@@ -51,7 +51,7 @@ class BookalopeClient(object):
         """
         self.__token = None
         if token is not None:
-            self.token = token
+            self.__token = token
         if beta_host:
             self.__host = "https://beta.bookalope.net"
         else:
@@ -87,7 +87,7 @@ class BookalopeClient(object):
                  OK (200) or if the response contained unexpected header/body
                  data.
         """
-        response = requests.get(self.__host + url, params=params, auth=(self.token, ""))
+        response = requests.get(self.__host + url, params=params, auth=(self.__token, ""))
         if response.status_code == requests.codes.ok:
             if response.headers["Content-Type"] == "application/json; charset=UTF-8":
                 return response.json()
@@ -111,7 +111,7 @@ class BookalopeClient(object):
         :raises: An HTTP exception if the server responded with anything but
                  OK (200) or CREATED (201).
         """
-        response = requests.post(self.__host + url, json=params, auth=(self.token, ""))
+        response = requests.post(self.__host + url, json=params, auth=(self.__token, ""))
         if response.status_code in [requests.codes.ok, requests.codes.created]:
             if int(response.headers["Content-Length"]):
                 # TODO: Check that Content-Type is JSON?
@@ -132,7 +132,7 @@ class BookalopeClient(object):
         :raises: An HTTP exception if the server responded with anything but
                  NO CONTENT (204).
         """
-        response = requests.delete(self.__host + url, auth=(self.token, ""))
+        response = requests.delete(self.__host + url, auth=(self.__token, ""))
         if response.status_code == requests.codes.no_content:
             return None
         response.raise_for_status()

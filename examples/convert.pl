@@ -124,6 +124,7 @@ write_file($bookflow_id . '.mobi', get_request($api_convert, {'format' => 'mobi'
 write_file($bookflow_id . '.pdf', get_request($api_convert, {'format' => 'pdf', 'version' => 'test'}));
 write_file($bookflow_id . '.icml', get_request($api_convert, {'format' => 'icml', 'version' => 'test'}));
 write_file($bookflow_id . '.docx', get_request($api_convert, {'format' => 'docx', 'version' => 'test'}));
+write_file($bookflow_id . '.xml', get_request($api_convert, {'format' => 'docbook', 'version' => 'test'}));
 
 # Delete the book and all of its data.
 delete_request("$api/books/$book_id");

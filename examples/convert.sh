@@ -39,6 +39,7 @@ if [ `builtin type -p http` ]; then
     http --download --timeout 300 --auth $TOKEN: GET $APIHOST/api/books/$BOOKID/bookflows/$BOOKFLOWID/convert format==pdf version==test
     http --download --timeout 300 --auth $TOKEN: GET $APIHOST/api/books/$BOOKID/bookflows/$BOOKFLOWID/convert format==icml version==test
     http --download --timeout 300 --auth $TOKEN: GET $APIHOST/api/books/$BOOKID/bookflows/$BOOKFLOWID/convert format==docx version==test
+    http --download --timeout 300 --auth $TOKEN: GET $APIHOST/api/books/$BOOKID/bookflows/$BOOKFLOWID/convert format==docbook version==test
 
     # Delete the "Test" book and all of its bookflows.
     http --auth $TOKEN: DELETE $APIHOST/api/books/$BOOKID
@@ -68,6 +69,7 @@ else
         curl --user $TOKEN: --output $BOOKFLOWID.pdf --request GET $APIHOST/api/books/$BOOKID/bookflows/$BOOKFLOWID/convert?format=pdf\&version=test
         curl --user $TOKEN: --output $BOOKFLOWID.icml --request GET $APIHOST/api/books/$BOOKID/bookflows/$BOOKFLOWID/convert?format=icml\&version=test
         curl --user $TOKEN: --output $BOOKFLOWID.docx --request GET $APIHOST/api/books/$BOOKID/bookflows/$BOOKFLOWID/convert?format=docx\&version=test
+        curl --user $TOKEN: --output $BOOKFLOWID.xml --request GET $APIHOST/api/books/$BOOKID/bookflows/$BOOKFLOWID/convert?format=docbook\&version=test
 
         # Delete the "Test" book and all of its bookflows.
         curl --user $TOKEN: --request DELETE $APIHOST/api/books/$BOOKID

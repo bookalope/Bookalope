@@ -512,7 +512,7 @@ Post the original document file for the given bookflow; if the bookflow has alre
 Get the bookflow's cover image. If no cover image was provided yet, then one will be generated on the fly. This generated cover image is not stored for the bookflow.
 
 **Parameters**: `name` (string) is the name or identifier of the image; this parameter is optional and defaults to `'cover-image'`.  
-**Retrun**: The requested image.  
+**Return**: The requested image.  
 **Errors**: `406` if the document is not in the `convert` step, or if the requested image name could not be found in the book.
 
     ~ > http --auth token: --verbose --download GET https://bookflow.bookalope.net/api/books/29fdc01dddb345268400bebef45b9d9e/bookflows/36582d54166540638efc286e655fb657/files/image
@@ -565,6 +565,94 @@ Post an image with the given name or id for the bookflow. The only image current
     Content-Type: text/html; charset=UTF-8
     Date: Mon, 21 Sep 2015 16:44:10 GMT
     Server: nginx/1.9.4
+
+### Scratchpad
+
+Every bookflow has its private scratchpad; a scratchpad is a dictionary of key-value pairs, where both keys and values are strings of 128 characters maximum length. With every `step` transition of a bookflow, the scratchpad is being erased.
+
+`GET https://bookflow.bookalope.net/api/books/{book_id}/bookflows/{id}/scratchpad`
+
+Get the current content of a bookflow's scratchpad.
+
+**Parameters**: n/a  
+**Return**: the scratchpad dictionary  
+**Errors**: n/a  
+
+    ~ > http --json --auth token: --verbose GET http://localhost:6543/api/books/29fdc01dddb345268400bebef45b9d9e/bookflows/36582d54166540638efc286e655fb657/scratchpad
+    GET /api/books/29fdc01dddb345268400bebef45b9d9e/bookflows/36582d54166540638efc286e655fb657/scratchpad HTTP/1.1
+    Accept: application/json
+    Accept-Encoding: gzip, deflate
+    Authorization: Basic token
+    Connection: keep-alive
+    Content-Type: application/json
+    Host: bookflow.bookalope.net
+    User-Agent: HTTPie/0.9.2
+
+    HTTP/1.1 200 OK
+    Content-Length: 18
+    Content-Type: application/json; charset=UTF-8
+    Date: Thu, 23 Jun 2016 21:39:41 GMT
+    Server: waitress
+
+    {
+        "scratchpad": {}
+    }
+
+`POST https://bookflow.bookalope.net/api/books/{book_id}/bookflows/{id}/scratchpad`
+
+Post, i.e. add or update entries of a bookflow's scratchpad. If they `key` does not yet exist, add the key-value pair; if the `key` already exists, update the value only.
+
+**Parameters**: A dictionary of key-value pairs, both keys and values must be strings no longer than 128 characters long.  
+**Return**: n/a  
+**Errors**: n/a  
+
+    ~ > http --json --auth token: --verbose POST http://localhost:6543/api/books/29fdc01dddb345268400bebef45b9d9e/bookflows/36582d54166540638efc286e655fb657/scratchpad scratchpad:='{"foo":"bla"}'
+    POST /api/books/29fdc01dddb345268400bebef45b9d9e/bookflows/36582d54166540638efc286e655fb657/scratchpad HTTP/1.1
+    Accept: application/json
+    Accept-Encoding: gzip, deflate
+    Authorization: Basic token
+    Connection: keep-alive
+    Content-Length: 30
+    Content-Type: application/json
+    Host: bookflow.bookalope.net
+    User-Agent: HTTPie/0.9.2
+
+    {
+        "scratchpad": {
+            "foo": "bla"
+        }
+    }
+
+    HTTP/1.1 200 OK
+    Content-Length: 0
+    Content-Type: text/html; charset=UTF-8
+    Date: Thu, 23 Jun 2016 21:39:45 GMT
+    Server: waitress
+
+`DELETE https://bookflow.bookalope.net/api/books/{book_id}/bookflows/{id}/scratchpad`
+
+Delete and clear the content of a bookflow's scratchpad. Note that Bookalope executes this function with every `step` transition of a bookflow.
+
+**Parameters**: n/a  
+**Return**: n/a  
+**Errors**: n/a  
+
+    ~ > http --json --auth token: --verbose DELETE http://localhost:6543/api/books/29fdc01dddb345268400bebef45b9d9e/bookflows/36582d54166540638efc286e655fb657/scratchpad
+    DELETE /api/books/29fdc01dddb345268400bebef45b9d9e/bookflows/36582d54166540638efc286e655fb657/scratchpad HTTP/1.1
+    Accept: application/json
+    Accept-Encoding: gzip, deflate
+    Authorization: Basic token
+    Connection: keep-alive
+    Content-Length: 0
+    Content-Type: application/json
+    Host: bookflow.bookalope.net
+    User-Agent: HTTPie/0.9.2
+
+    HTTP/1.1 204 No Content
+    Content-Length: 0
+    Content-Type: text/html; charset=UTF-8
+    Date: Thu, 23 Jun 2016 21:40:03 GMT
+    Server: waitress
 
 ### Conversion and Download
 

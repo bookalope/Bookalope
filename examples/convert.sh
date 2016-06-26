@@ -29,17 +29,17 @@ if [ `builtin type -p http` ]; then
 
     # Upload the manuscript which automatically converts it using defaults.
     base64 "$DOCFILE" > "$TMPDIR/$DOCFILE.base64"
-    http --json --timeout 300 --auth $TOKEN: POST $APIHOST/api/books/$BOOKID/bookflows/$BOOKFLOWID/files/document file=@"$TMPDIR/$DOCFILE.base64" filename="$DOCFILE" filetype=doc
+    http --json --timeout 300 --auth $TOKEN: POST $APIHOST/api/bookflows/$BOOKFLOWID/files/document file=@"$TMPDIR/$DOCFILE.base64" filename="$DOCFILE" filetype=doc
     echo "Uploaded document"
 
     # Download the converted results.
     echo "Downloading converted books"
-    http --download --timeout 300 --auth $TOKEN: GET $APIHOST/api/books/$BOOKID/bookflows/$BOOKFLOWID/convert format==epub version==test
-    http --download --timeout 300 --auth $TOKEN: GET $APIHOST/api/books/$BOOKID/bookflows/$BOOKFLOWID/convert format==mobi version==test
-    http --download --timeout 300 --auth $TOKEN: GET $APIHOST/api/books/$BOOKID/bookflows/$BOOKFLOWID/convert format==pdf version==test
-    http --download --timeout 300 --auth $TOKEN: GET $APIHOST/api/books/$BOOKID/bookflows/$BOOKFLOWID/convert format==icml version==test
-    http --download --timeout 300 --auth $TOKEN: GET $APIHOST/api/books/$BOOKID/bookflows/$BOOKFLOWID/convert format==docx version==test
-    http --download --timeout 300 --auth $TOKEN: GET $APIHOST/api/books/$BOOKID/bookflows/$BOOKFLOWID/convert format==docbook version==test
+    http --download --timeout 300 --auth $TOKEN: GET $APIHOST/api/bookflows/$BOOKFLOWID/convert format==epub version==test
+    http --download --timeout 300 --auth $TOKEN: GET $APIHOST/api/bookflows/$BOOKFLOWID/convert format==mobi version==test
+    http --download --timeout 300 --auth $TOKEN: GET $APIHOST/api/bookflows/$BOOKFLOWID/convert format==pdf version==test
+    http --download --timeout 300 --auth $TOKEN: GET $APIHOST/api/bookflows/$BOOKFLOWID/convert format==icml version==test
+    http --download --timeout 300 --auth $TOKEN: GET $APIHOST/api/bookflows/$BOOKFLOWID/convert format==docx version==test
+    http --download --timeout 300 --auth $TOKEN: GET $APIHOST/api/bookflows/$BOOKFLOWID/convert format==docbook version==test
 
     # Delete the "Test" book and all of its bookflows.
     http --auth $TOKEN: DELETE $APIHOST/api/books/$BOOKID
@@ -61,15 +61,15 @@ else
         echo '{"filetype":"doc", "filename":"'$DOCFILE'", "file":"' > "$TMPDIR/$DOCFILE.json"
         base64 "$DOCFILE" >> "$TMPDIR/$DOCFILE.json"
         echo '"}' >> "$TMPDIR/$DOCFILE.json"
-        curl --user $TOKEN: --header "Content-Type: application/json" --data @"$TMPDIR/$DOCFILE.json" --request POST $APIHOST/api/books/$BOOKID/bookflows/$BOOKFLOWID/files/document
+        curl --user $TOKEN: --header "Content-Type: application/json" --data @"$TMPDIR/$DOCFILE.json" --request POST $APIHOST/api/bookflows/$BOOKFLOWID/files/document
 
         # Download the converted results.
-        curl --user $TOKEN: --output $BOOKFLOWID.epub --request GET $APIHOST/api/books/$BOOKID/bookflows/$BOOKFLOWID/convert?format=epub\&version=test
-        curl --user $TOKEN: --output $BOOKFLOWID.mobi --request GET $APIHOST/api/books/$BOOKID/bookflows/$BOOKFLOWID/convert?format=mobi\&version=test
-        curl --user $TOKEN: --output $BOOKFLOWID.pdf --request GET $APIHOST/api/books/$BOOKID/bookflows/$BOOKFLOWID/convert?format=pdf\&version=test
-        curl --user $TOKEN: --output $BOOKFLOWID.icml --request GET $APIHOST/api/books/$BOOKID/bookflows/$BOOKFLOWID/convert?format=icml\&version=test
-        curl --user $TOKEN: --output $BOOKFLOWID.docx --request GET $APIHOST/api/books/$BOOKID/bookflows/$BOOKFLOWID/convert?format=docx\&version=test
-        curl --user $TOKEN: --output $BOOKFLOWID.xml --request GET $APIHOST/api/books/$BOOKID/bookflows/$BOOKFLOWID/convert?format=docbook\&version=test
+        curl --user $TOKEN: --output $BOOKFLOWID.epub --request GET $APIHOST/api/bookflows/$BOOKFLOWID/convert?format=epub\&version=test
+        curl --user $TOKEN: --output $BOOKFLOWID.mobi --request GET $APIHOST/api/bookflows/$BOOKFLOWID/convert?format=mobi\&version=test
+        curl --user $TOKEN: --output $BOOKFLOWID.pdf --request GET $APIHOST/api/bookflows/$BOOKFLOWID/convert?format=pdf\&version=test
+        curl --user $TOKEN: --output $BOOKFLOWID.icml --request GET $APIHOST/api/bookflows/$BOOKFLOWID/convert?format=icml\&version=test
+        curl --user $TOKEN: --output $BOOKFLOWID.docx --request GET $APIHOST/api/bookflows/$BOOKFLOWID/convert?format=docx\&version=test
+        curl --user $TOKEN: --output $BOOKFLOWID.xml --request GET $APIHOST/api/bookflows/$BOOKFLOWID/convert?format=docbook\&version=test
 
         # Delete the "Test" book and all of its bookflows.
         curl --user $TOKEN: --request DELETE $APIHOST/api/books/$BOOKID

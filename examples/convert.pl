@@ -101,24 +101,24 @@ my $bookflow_id = $bookflow->{'id'};
 say 'Created new book ' . $book_id . ' with bookflow ' . $bookflow_id;
 
 # Set author and title for this bookflow.
-my $api_bookflows = "$api/books/$book_id/bookflows/$bookflow_id";
+my $api_bookflows = "$api/bookflows/$bookflow_id";
 post_request($api_bookflows, {'name' => 'Bookflow 1', 'title' => $title, 'author' => $author});
 
 # Upload the document.
 say 'Uploading document...';
-my $api_document = "$api/books/$book_id/bookflows/$bookflow_id/files/document";
+my $api_document = "$api/bookflows/$bookflow_id/files/document";
 post_request($api_document, {'filetype' => 'doc', 'filename' => basename($filename), 'file' => encode_base64(read_file($filename))});
 
 # Upload the cover image, if one was given.
 if ($cover) {
     say 'Uploading cover image...';
-    my $api_cover = "$api/books/$book_id/bookflows/$bookflow_id/files/image";
+    my $api_cover = "$api/bookflows/$bookflow_id/files/image";
     post_request($api_cover, {'name' => 'cover-image', 'filename' => basename($cover), 'file' => encode_base64(read_file($cover))});
 }
 
 # Download the converted files.
 say 'Downloading converted books...';
-my $api_convert = "$api/books/$book_id/bookflows/$bookflow_id/convert";
+my $api_convert = "$api/bookflows/$bookflow_id/convert";
 write_file($bookflow_id . '.epub', get_request($api_convert, {'format' => 'epub', 'version' => 'test'}));
 write_file($bookflow_id . '.mobi', get_request($api_convert, {'format' => 'mobi', 'version' => 'test'}));
 write_file($bookflow_id . '.pdf', get_request($api_convert, {'format' => 'pdf', 'version' => 'test'}));

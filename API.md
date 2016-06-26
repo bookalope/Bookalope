@@ -348,7 +348,7 @@ Post to create a new bookflow for the given book and return the new bookflow `id
         }
     }
 
-`GET https://bookflow.bookalope.net/api/books/{book_id}/bookflows/{id}`
+`GET https://bookflow.bookalope.net/api/bookflows/{id}`
 
 Get all metadata for the bookflow with that id. 
 
@@ -356,8 +356,8 @@ Get all metadata for the bookflow with that id.
 **Return**: All meta data for the bookflow.  
 **Errors**: n/a
 
-    ~ > http --auth token: --verbose GET https://bookflow.bookalope.net/api/books/29fdc01dddb345268400bebef45b9d9e/bookflows/56b7f0c370ec4a78b1154f09c5934f13
-    GET /api/books/29fdc01dddb345268400bebef45b9d9e/bookflows/56b7f0c370ec4a78b1154f09c5934f13 HTTP/1.1
+    ~ > http --auth token: --verbose GET https://bookflow.bookalope.net/api/bookflows/56b7f0c370ec4a78b1154f09c5934f13
+    GET /api/bookflows/56b7f0c370ec4a78b1154f09c5934f13 HTTP/1.1
     Accept: application/json
     Accept-Encoding: gzip, deflate
     Authorization: Basic token
@@ -387,7 +387,7 @@ Get all metadata for the bookflow with that id.
         }
     }
 
-`POST https://bookflow.bookalope.net/api/books/{book_id}/bookflows/{id}`
+`POST https://bookflow.bookalope.net/api/bookflows/{id}`
 
 Post to update the meta data for the given bookflow.
 
@@ -395,8 +395,8 @@ Post to update the meta data for the given bookflow.
 **Return**: n/a  
 **Errors**: n/a  
 
-    http --auth token: --json --verbose POST https://bookflow.bookalope.net/api/books/29fdc01dddb345268400bebef45b9d9e/bookflows/56b7f0c370ec4a78b1154f09c5934f13 name="Bookflow 1" title="Even funkier title" publisher="Publisher" author="Author"
-    POST /api/books/29fdc01dddb345268400bebef45b9d9e/bookflows/56b7f0c370ec4a78b1154f09c5934f13 HTTP/1.1
+    http --auth token: --json --verbose POST https://bookflow.bookalope.net/api/bookflows/56b7f0c370ec4a78b1154f09c5934f13 name="Bookflow 1" title="Even funkier title" publisher="Publisher" author="Author"
+    POST /api/bookflows/56b7f0c370ec4a78b1154f09c5934f13 HTTP/1.1
     Accept: application/json
     Accept-Encoding: gzip, deflate
     Authorization: Basic token
@@ -419,7 +419,7 @@ Post to update the meta data for the given bookflow.
     Date: Fri, 18 Sep 2015 18:37:05 GMT
     Server: nginx/1.9.4
 
-`DELETE https://bookflow.bookalope.net/api/books/{book_id}/bookflows/{id}`
+`DELETE https://bookflow.bookalope.net/api/bookflows/{id}`
 
 Delete the specified bookflow.
 
@@ -427,8 +427,8 @@ Delete the specified bookflow.
 **Return**: n/a  
 **Errors**: n/a
 
-    ~ > http --auth token: --verbose DELETE https://bookflow.bookalope.net/api/books/29fdc01dddb345268400bebef45b9d9e/bookflows/56b7f0c370ec4a78b1154f09c5934f13
-    DELETE /api/books/29fdc01dddb345268400bebef45b9d9e/bookflows/56b7f0c370ec4a78b1154f09c5934f13 HTTP/1.1
+    ~ > http --auth token: --verbose DELETE https://bookflow.bookalope.net/api/bookflows/56b7f0c370ec4a78b1154f09c5934f13
+    DELETE /api/bookflows/56b7f0c370ec4a78b1154f09c5934f13 HTTP/1.1
     Accept: application/json
     Accept-Encoding: gzip, deflate
     Authorization: Basic token
@@ -448,7 +448,7 @@ Delete the specified bookflow.
 
 The original text document and images for a bookflow are handled similar to the `files` view of the website. Because request parameters are passed as a JSON string in the request body, the file to upload must be [base64](https://en.wikipedia.org/wiki/Base64) encoded and the resulting string is used as the `file` parameter.
 
-`GET https://bookflow.bookalope.net/api/books/{book_id}/bookflows/{id}/files/document`
+`GET https://bookflow.bookalope.net/api/bookflows/{id}/files/document`
 
 Get the bookflow's original document file, if it exists.
 
@@ -456,8 +456,8 @@ Get the bookflow's original document file, if it exists.
 **Return**: The original text document for the bookflow.  
 **Error**: `404` if the bookflow did not contain an original text document.
 
-    ~ > http --auth token: --verbose --download GET https://bookflow.bookalope.net/api/books/29fdc01dddb345268400bebef45b9d9e/bookflows/36582d54166540638efc286e655fb657/files/document
-    GET /api/books/29fdc01dddb345268400bebef45b9d9e/bookflows/36582d54166540638efc286e655fb657/files/document HTTP/1.1
+    ~ > http --auth token: --verbose --download GET https://bookflow.bookalope.net/api/bookflows/36582d54166540638efc286e655fb657/files/document
+    GET /api/bookflows/36582d54166540638efc286e655fb657/files/document HTTP/1.1
     Accept: application/json
     Authorization: Basic token
     Connection: keep-alive
@@ -475,7 +475,7 @@ Get the bookflow's original document file, if it exists.
     Downloading 18.88 kB to "bla.odt"
     Done. 18.88 kB in 0.00050s (36.66 MB/s)
 
-`POST https://bookflow.bookalope.net/api/books/{book_id}/bookflows/{id}/files/document`
+`POST https://bookflow.bookalope.net/api/bookflows/{id}/files/document`
 
 Post the original document file for the given bookflow; if the bookflow has already a document file, then this call fails. This causes the Bookalope server to analyze the document and to extract content from it based on built-in heuristics. The interactive *Import* and *Content* steps from the website are incorporated here, and the bookflow moves forward to the *Convert* step automatically as if the user clicked *Next* on the website.
 
@@ -484,8 +484,8 @@ Post the original document file for the given bookflow; if the bookflow has alre
 **Error**: `406` if the bookflow already contains a document or if the file type is unsupported, `413` if the posted document is too large (more than 12MB).
 
     ~ > base64 bla.odt > bla.odt.b64
-    ~ > http --auth token: --json --verbose POST https://bookflow.bookalope.net/api/books/29fdc01dddb345268400bebef45b9d9e/bookflows/36582d54166540638efc286e655fb657/files/document file=@bla.odt.b64 filename=bla.odt filetype=doc
-    POST /api/books/29fdc01dddb345268400bebef45b9d9e/bookflows/36582d54166540638efc286e655fb657/files/document HTTP/1.1
+    ~ > http --auth token: --json --verbose POST https://bookflow.bookalope.net/api/bookflows/36582d54166540638efc286e655fb657/files/document file=@bla.odt.b64 filename=bla.odt filetype=doc
+    POST /api/bookflows/36582d54166540638efc286e655fb657/files/document HTTP/1.1
     Accept: application/json
     Accept-Encoding: gzip, deflate
     Authorization: Basic token
@@ -507,7 +507,7 @@ Post the original document file for the given bookflow; if the bookflow has alre
     Date: Fri, 18 Sep 2015 22:47:25 GMT
     Server: nginx/1.9.4
 
-`GET https://bookflow.bookalope.net/api/books/{book_id}/bookflows/{id}/files/image`
+`GET https://bookflow.bookalope.net/api/bookflows/{id}/files/image`
 
 Get the bookflow's cover image. If no cover image was provided yet, then one will be generated on the fly. This generated cover image is not stored for the bookflow.
 
@@ -515,8 +515,8 @@ Get the bookflow's cover image. If no cover image was provided yet, then one wil
 **Return**: The requested image.  
 **Errors**: `406` if the document is not in the `convert` step, or if the requested image name could not be found in the book.
 
-    ~ > http --auth token: --verbose --download GET https://bookflow.bookalope.net/api/books/29fdc01dddb345268400bebef45b9d9e/bookflows/36582d54166540638efc286e655fb657/files/image
-    GET /api/books/29fdc01dddb345268400bebef45b9d9e/bookflows/36582d54166540638efc286e655fb657/files/image HTTP/1.1
+    ~ > http --auth token: --verbose --download GET https://bookflow.bookalope.net/api/bookflows/36582d54166540638efc286e655fb657/files/image
+    GET /api/bookflows/36582d54166540638efc286e655fb657/files/image HTTP/1.1
     Accept: application/json
     Authorization: Basic token
     Connection: keep-alive
@@ -534,7 +534,7 @@ Get the bookflow's cover image. If no cover image was provided yet, then one wil
     Downloading 16.39 kB to "36582d54166540638efc286e655fb657-cover-image.png"
     Done. 16.39 kB in 0.00058s (27.79 MB/s)
 
-`POST https://bookflow.bookalope.net/api/books/{book_id}/bookflows/{id}/files/image`
+`POST https://bookflow.bookalope.net/api/bookflows/{id}/files/image`
 
 Post an image with the given name or id for the bookflow. The only image currently supported is the cover image.
 
@@ -543,8 +543,8 @@ Post an image with the given name or id for the bookflow. The only image current
 **Errors**: `400` if the image is not one of the supported formats (jpg, png, gif); `406` if the bookflow does not contain a document, or the document is not in `convert` step, or no image with the specified name existed; `413` if the posted document is too large (more than 12MB).  
 
     ~ > base64 cover.png > cover.png.b64
-    ~ > http --auth token: --json --verbose POST https://bookflow.bookalope.net/api/books/29fdc01dddb345268400bebef45b9d9e/bookflows/36582d54166540638efc286e655fb657/files/image file=@cover.png.b64 filename=cover.png name="cover-image"
-    POST /api/books/29fdc01dddb345268400bebef45b9d9e/bookflows/36582d54166540638efc286e655fb657/files/image HTTP/1.1
+    ~ > http --auth token: --json --verbose POST https://bookflow.bookalope.net/api/bookflows/36582d54166540638efc286e655fb657/files/image file=@cover.png.b64 filename=cover.png name="cover-image"
+    POST /api/bookflows/36582d54166540638efc286e655fb657/files/image HTTP/1.1
     Accept: application/json
     Accept-Encoding: gzip, deflate
     Authorization: Basic token
@@ -570,7 +570,7 @@ Post an image with the given name or id for the bookflow. The only image current
 
 Every bookflow has its private scratchpad; a scratchpad is a dictionary of key-value pairs, where both keys and values are strings of 128 characters maximum length. With every `step` transition of a bookflow, the scratchpad is being erased.
 
-`GET https://bookflow.bookalope.net/api/books/{book_id}/bookflows/{id}/scratchpad`
+`GET https://bookflow.bookalope.net/api/bookflows/{id}/scratchpad`
 
 Get the current content of a bookflow's scratchpad.
 
@@ -578,8 +578,8 @@ Get the current content of a bookflow's scratchpad.
 **Return**: the scratchpad dictionary  
 **Errors**: n/a  
 
-    ~ > http --json --auth token: --verbose GET http://localhost:6543/api/books/29fdc01dddb345268400bebef45b9d9e/bookflows/36582d54166540638efc286e655fb657/scratchpad
-    GET /api/books/29fdc01dddb345268400bebef45b9d9e/bookflows/36582d54166540638efc286e655fb657/scratchpad HTTP/1.1
+    ~ > http --json --auth token: --verbose GET http://localhost:6543/api/bookflows/36582d54166540638efc286e655fb657/scratchpad
+    GET /api/bookflows/36582d54166540638efc286e655fb657/scratchpad HTTP/1.1
     Accept: application/json
     Accept-Encoding: gzip, deflate
     Authorization: Basic token
@@ -598,7 +598,7 @@ Get the current content of a bookflow's scratchpad.
         "scratchpad": {}
     }
 
-`POST https://bookflow.bookalope.net/api/books/{book_id}/bookflows/{id}/scratchpad`
+`POST https://bookflow.bookalope.net/api/bookflows/{id}/scratchpad`
 
 Post, i.e. add or update entries of a bookflow's scratchpad. If they `key` does not yet exist, add the key-value pair; if the `key` already exists, update the value only.
 
@@ -606,8 +606,8 @@ Post, i.e. add or update entries of a bookflow's scratchpad. If they `key` does 
 **Return**: n/a  
 **Errors**: n/a  
 
-    ~ > http --json --auth token: --verbose POST http://localhost:6543/api/books/29fdc01dddb345268400bebef45b9d9e/bookflows/36582d54166540638efc286e655fb657/scratchpad scratchpad:='{"foo":"bla"}'
-    POST /api/books/29fdc01dddb345268400bebef45b9d9e/bookflows/36582d54166540638efc286e655fb657/scratchpad HTTP/1.1
+    ~ > http --json --auth token: --verbose POST http://localhost:6543/api/bookflows/36582d54166540638efc286e655fb657/scratchpad scratchpad:='{"foo":"bla"}'
+    POST /api/bookflows/36582d54166540638efc286e655fb657/scratchpad HTTP/1.1
     Accept: application/json
     Accept-Encoding: gzip, deflate
     Authorization: Basic token
@@ -629,7 +629,7 @@ Post, i.e. add or update entries of a bookflow's scratchpad. If they `key` does 
     Date: Thu, 23 Jun 2016 21:39:45 GMT
     Server: waitress
 
-`DELETE https://bookflow.bookalope.net/api/books/{book_id}/bookflows/{id}/scratchpad`
+`DELETE https://bookflow.bookalope.net/api/bookflows/{id}/scratchpad`
 
 Delete and clear the content of a bookflow's scratchpad. Note that Bookalope executes this function with every `step` transition of a bookflow.
 
@@ -637,8 +637,8 @@ Delete and clear the content of a bookflow's scratchpad. Note that Bookalope exe
 **Return**: n/a  
 **Errors**: n/a  
 
-    ~ > http --json --auth token: --verbose DELETE http://localhost:6543/api/books/29fdc01dddb345268400bebef45b9d9e/bookflows/36582d54166540638efc286e655fb657/scratchpad
-    DELETE /api/books/29fdc01dddb345268400bebef45b9d9e/bookflows/36582d54166540638efc286e655fb657/scratchpad HTTP/1.1
+    ~ > http --json --auth token: --verbose DELETE http://localhost:6543/api/bookflows/36582d54166540638efc286e655fb657/scratchpad
+    DELETE /api/bookflows/36582d54166540638efc286e655fb657/scratchpad HTTP/1.1
     Accept: application/json
     Accept-Encoding: gzip, deflate
     Authorization: Basic token
@@ -758,7 +758,7 @@ Get information about the available visual styles for one or for all target book
         ]
     }
 
-`GET https://bookflow.bookalope.net/api/books/{book_id}/bookflows/{id}/convert`
+`GET https://bookflow.bookalope.net/api/bookflows/{id}/convert`
 
 Convert and download the document into a target format and styling.
 
@@ -766,8 +766,8 @@ Convert and download the document into a target format and styling.
 **Return**: The converted document.  
 **Errors**: `406` if the bookflow step is anything other than `convert`. `409` if `version=final` and the user has no billing information or if the server explicitly disallows only `final`. `500` if a credit card charge failed.
 
-    ~ > http --auth token: --verbose --download GET https://bookflow.bookalope.net/api/books/29fdc01dddb345268400bebef45b9d9e/bookflows/36582d54166540638efc286e655fb657/convert format==epub
-    GET /api/books/29fdc01dddb345268400bebef45b9d9e/bookflows/36582d54166540638efc286e655fb657/convert?format=epub HTTP/1.1
+    ~ > http --auth token: --verbose --download GET https://bookflow.bookalope.net/api/bookflows/36582d54166540638efc286e655fb657/convert format==epub
+    GET /api/bookflows/36582d54166540638efc286e655fb657/convert?format=epub HTTP/1.1
     Accept: application/json
     Authorization: Basic token
     Connection: keep-alive

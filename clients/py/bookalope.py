@@ -617,7 +617,7 @@ class Bookflow(object):
         elif isinstance(id_or_packed, str):
             if not _is_token(id_or_packed):
                 raise TokenError(id_or_packed)
-            url = "/api/books/{}/bookflows/{}".format(book.id, id_or_packed)
+            url = "/api/bookflows/{}".format(id_or_packed)
             bookflow = self.__bookalope.http_get(url)["bookflow"]
         elif isinstance(id_or_packed, dict):
             bookflow = id_or_packed
@@ -627,7 +627,7 @@ class Bookflow(object):
         self.__name = bookflow["name"]
         self.__step = bookflow["step"]
         self.__book = book
-        self.__url = "/api/books/{}/bookflows/{}".format(self.__book.id, self.__id)
+        self.__url = "/api/bookflows/{}".format(self.__id)
         # Metadata that can be modified.
         # TODO: Consider update() here to pull in server data.
         self.__title = None

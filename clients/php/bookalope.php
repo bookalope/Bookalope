@@ -381,7 +381,7 @@ class Bookflow {
             if (!is_token($id_or_packed)) {
                 throw new BookalopeTokenException($id_or_packed);
             }
-            $url = "/api/books/" . $book->id . "/bookflows/" . $id_or_packed;
+            $url = "/api/bookflows/" . $id_or_packed;
             $bookflow = $this->bookalope->http_get($url)->bookflow;
         }
         else if (is_object($id_or_packed)) {
@@ -394,7 +394,7 @@ class Bookflow {
         $this->name = $bookflow->name;
         $this->step = $bookflow->step;
         $this->book = $book;
-        $this->url = "/api/books/" . $book->id . "/bookflows/" . $bookflow->id;
+        $this->url = "/api/bookflows/" . $bookflow->id;
         // Metadata
         // TODO: Consider update() here to pull in server data.
         $this->title = NULL;

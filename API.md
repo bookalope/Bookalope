@@ -568,7 +568,7 @@ Post an image with the given name or id for the bookflow. The only image current
 
 ### Scratchpad
 
-Every bookflow has its private scratchpad; a scratchpad is a dictionary of key-value pairs, where both keys and values are strings of 128 characters maximum length. With every `step` transition of a bookflow, the scratchpad is being erased.
+Every bookflow has its private scratchpad; a scratchpad is a dictionary of key-value pairs, where keys are strings of 128 characters maximum length and values are `null`, of type `Boolean`, `Number`, or strings of 128 characters maximum length. With every `step` transition of a bookflow, the scratchpad is being erased.
 
 `GET https://bookflow.bookalope.net/api/bookflows/{id}/scratchpad`
 

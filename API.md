@@ -41,7 +41,7 @@ Get the current profile data.
 **Return**: first and last name  
 **Errors**: n/a
 
-    ~ > http --auth token:--verbose GET https://bookflow.bookalope.net/api/profile
+    ~ > http --auth token: --verbose GET https://bookflow.bookalope.net/api/profile
     GET /api/profile HTTP/1.1
     Accept: application/json
     Accept-Encoding: gzip, deflate

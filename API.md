@@ -1,8 +1,62 @@
 <img src="https://bookalope.net/img/bookalope-logo.png" width="50%" alt="Bookalope Logo">
 
-## The Bookalope REST API
+# The Bookalope REST API
 
-### Overview
+## Table of Content
+
+- [Overview](#overview)
+- [User Profile](#user-profile)
+  - [GET /api/profile](#get-profile)  
+  Return a user's profile information
+  - [POST /api/profile](#post-profile)  
+  Modify a user's profile information
+- [Books](#books)
+  - [GET /api/books](#get-books)  
+  Return a list of current books
+  - [POST /api/books](#post-books)  
+  Create a new book
+  - [GET /api/books/{book_id}](#get-books-id)  
+  Return information about the book with id `book_id`
+  - [POST /api/books/{book_id}](#post-books-id)  
+  Modify information for the book with id `book_id`
+  - [DELETE /api/books/{book_id}](#delete-books-id)  
+  Delete the book with id `book_id`
+- [Bookflows](#bookflows)
+  - [GET /api/books/{book_id}/bookflows](#get-bookflows)  
+  Return a list of bookflows for the book with id `book_id`
+  - [POST /api/books/{book_id}/bookflows](#post-bookflows)  
+  Create a new bookflow for the given book with id `book_id`
+  - [GET /api/bookflows/{id}](#get-bookflows-id)  
+  Return information about the bookflow with id `id`
+  - [POST /api/bookflows/{id}](#post-bookflows-id)  
+  Modify the information of the bookflow with id `id`
+  - [DELETE /api/bookflows/{id}](#delete-bookflows-id)  
+  Delete the bookflow with id `id`
+- [Document and Image Handling](#document-and-image-handling)
+  - [GET /api/bookflows/{id}/files/document](#get-bookflows-files-document)  
+  Return the bookflow's original document file, if it exists
+  - [POST /api/bookflows/{id}/files/document](#post-bookflows-files-document)  
+  Upload a document for analysis for the given bookflow with id `id`
+  - [GET /api/bookflows/{id}/files/image](#get-bookflows-files-image)  
+  Return an image for the bookflow with id `id`
+  - [POST /api/bookflows/{id}/files/image](#post-bookflows-files-image)  
+  Upload an image for the book of the bookflow with id `id`
+- [Scratchpad](#scratchpad)
+  - [GET /api/bookflows/{id}/scratchpad](#get-scratchpad)  
+  Return the content of the bookflow's scratchpad
+  - [POST /api/bookflows/{id}/scratchpad](#post-scratchpad)  
+  Add or update entries of the bookflow's scratchpad
+  - [DELETE /api/bookflows/{id}/scratchpad](#delete-scratchpad)  
+  Clear the bookflow's scratchpad
+- [Conversion and Download](#conversion-and-download)
+  - [GET /api/formats](#get-formats)  
+  Return a list of all supported import and export file formats
+  - [GET /api/styles](#get-styles)  
+  Return styling information for all or a specific export file format
+  - [GET /api/bookflows/{id}/convert](#get-bookflows-convert)  
+  Convert and download the bookflow's document
+
+## Overview
 
 [Bookalope](https://bookalope.net/) provides web services to the user through a [REST API](https://en.wikipedia.org/wiki/Representational_state_transfer). All resource URLs are based on `https://bookflow.bookalope.net/api` and require [basic authenticated client access](https://en.wikipedia.org/wiki/Basic_access_authentication) with each request.
 
@@ -31,9 +85,11 @@ Upon successful execution of a request, the return code of a response is one of 
 
 Versioning of the API is currently not considered; options are using the URL or by extending the `Accept` request entry.
 
-### User Profile
+## User Profile
 
-`GET https://bookflow.bookalope.net/api/profile` 
+A user profile contains relevant information about the current (i.e. requesting) user.
+
+<a name="get-profile"></a>`GET https://bookflow.bookalope.net/api/profile`
 
 Get the current profile data.
 
@@ -64,7 +120,7 @@ Get the current profile data.
         }
     }
 
-`POST https://bookflow.bookalope.net/api/profile`
+<a name="post-profile"></a>`POST https://bookflow.bookalope.net/api/profile`
 
 Modify the current profile data.
 
@@ -94,9 +150,9 @@ Modify the current profile data.
     Date: Fri, 18 Sep 2015 06:58:53 GMT
     Server: nginx/1.9.4
 
-### Books
+## Books
 
-`GET https://bookflow.bookalope.net/api/books`
+<a name="get-books"></a>`GET https://bookflow.bookalope.net/api/books`
 
 Get the list of book ids for the current profile.
 
@@ -140,7 +196,7 @@ Get the list of book ids for the current profile.
         ]
     }
 
-`POST https://bookflow.bookalope.net/api/books`
+<a name="post-books"></a> `POST https://bookflow.bookalope.net/api/books`
 
 Create a new book with a single empty bookflow.
 
@@ -183,7 +239,7 @@ Create a new book with a single empty bookflow.
         }
     }
 
-`GET https://bookflow.bookalope.net/api/books/{book_id}`
+<a name="get-books-id"></a> `GET https://bookflow.bookalope.net/api/books/{book_id}`
 
 Get the metadata (id, name, creation date, and a list of all bookflows) for the book with that the given `book_id`.
 
@@ -221,7 +277,7 @@ Get the metadata (id, name, creation date, and a list of all bookflows) for the 
         }
     }
 
-`POST https://bookflow.bookalope.net/api/books/{book_id}`
+<a name="post-books-id"></a> `POST https://bookflow.bookalope.net/api/books/{book_id}`
 
 Post to update the book name/title. 
 
@@ -250,7 +306,7 @@ Post to update the book name/title.
     Date: Fri, 18 Sep 2015 17:46:27 GMT
     Server: nginx/1.9.4
 
-`DELETE https://bookflow.bookalope.net/api/books/{book_id}`
+<a name="delete-books-id"></a> `DELETE https://bookflow.bookalope.net/api/books/{book_id}`
 
 Delete the specified book. Note that deleting a book also deletes all of the book's bookflows.
 
@@ -275,9 +331,9 @@ Delete the specified book. Note that deleting a book also deletes all of the boo
     Date: Fri, 18 Sep 2015 17:49:28 GMT
     Server: nginx/1.9.4
 
-### Bookflows
+## Bookflows
 
-`GET https://bookflow.bookalope.net/api/books/{book_id}/bookflows`
+<a name="get-bookflows"></a>`GET https://bookflow.bookalope.net/api/books/{book_id}/bookflows`
 
 Get the list of bookflow ids for the currect book.
 
@@ -310,7 +366,7 @@ Get the list of bookflow ids for the currect book.
         ]
     }
 
-`POST https://bookflow.bookalope.net/api/books/{book_id}/bookflows`
+<a name="post-bookflows"></a>`POST https://bookflow.bookalope.net/api/books/{book_id}/bookflows`
 
 Post to create a new bookflow for the given book and return the new bookflow `id`.
 
@@ -348,7 +404,7 @@ Post to create a new bookflow for the given book and return the new bookflow `id
         }
     }
 
-`GET https://bookflow.bookalope.net/api/bookflows/{id}`
+<a name="get-bookflows-id"></a>`GET https://bookflow.bookalope.net/api/bookflows/{id}`
 
 Get all metadata for the bookflow with that id. 
 
@@ -387,7 +443,7 @@ Get all metadata for the bookflow with that id.
         }
     }
 
-`POST https://bookflow.bookalope.net/api/bookflows/{id}`
+<a name="post-bookflows-id"></a>`POST https://bookflow.bookalope.net/api/bookflows/{id}`
 
 Post to update the meta data for the given bookflow.
 
@@ -419,7 +475,7 @@ Post to update the meta data for the given bookflow.
     Date: Fri, 18 Sep 2015 18:37:05 GMT
     Server: nginx/1.9.4
 
-`DELETE https://bookflow.bookalope.net/api/bookflows/{id}`
+<a name="delete-bookflows-id"></a>`DELETE https://bookflow.bookalope.net/api/bookflows/{id}`
 
 Delete the specified bookflow.
 
@@ -444,11 +500,11 @@ Delete the specified bookflow.
     Date: Fri, 18 Sep 2015 22:26:41 GMT
     Server: nginx/1.9.4
 
-### Document and Image Handling
+## Document and Image Handling
 
 The original text document and images for a bookflow are handled similar to the `files` view of the website. Because request parameters are passed as a JSON string in the request body, the file to upload must be [base64](https://en.wikipedia.org/wiki/Base64) encoded and the resulting string is used as the `file` parameter.
 
-`GET https://bookflow.bookalope.net/api/bookflows/{id}/files/document`
+<a name="get-bookflows-files-document"></a>`GET https://bookflow.bookalope.net/api/bookflows/{id}/files/document`
 
 Get the bookflow's original document file, if it exists.
 
@@ -475,7 +531,7 @@ Get the bookflow's original document file, if it exists.
     Downloading 18.88 kB to "bla.odt"
     Done. 18.88 kB in 0.00050s (36.66 MB/s)
 
-`POST https://bookflow.bookalope.net/api/bookflows/{id}/files/document`
+<a name="post-bookflows-files-document"></a>`POST https://bookflow.bookalope.net/api/bookflows/{id}/files/document`
 
 Post the original document file for the given bookflow; if the bookflow has already a document file, then this call fails. This causes the Bookalope server to analyze the document and to extract content from it based on built-in heuristics. The interactive *Import* and *Content* steps from the website are incorporated here, and the bookflow moves forward to the *Convert* step automatically as if the user clicked *Next* on the website.
 
@@ -507,7 +563,7 @@ Post the original document file for the given bookflow; if the bookflow has alre
     Date: Fri, 18 Sep 2015 22:47:25 GMT
     Server: nginx/1.9.4
 
-`GET https://bookflow.bookalope.net/api/bookflows/{id}/files/image`
+<a name="get-bookflows-files-image"></a>`GET https://bookflow.bookalope.net/api/bookflows/{id}/files/image`
 
 Get the bookflow's cover image. If no cover image was provided yet, then one will be generated on the fly. This generated cover image is not stored for the bookflow.
 
@@ -534,7 +590,7 @@ Get the bookflow's cover image. If no cover image was provided yet, then one wil
     Downloading 16.39 kB to "36582d54166540638efc286e655fb657-cover-image.png"
     Done. 16.39 kB in 0.00058s (27.79 MB/s)
 
-`POST https://bookflow.bookalope.net/api/bookflows/{id}/files/image`
+<a name="post-bookflows-files-image"></a>`POST https://bookflow.bookalope.net/api/bookflows/{id}/files/image`
 
 Post an image with the given name or id for the bookflow. The only image currently supported is the cover image.
 
@@ -566,11 +622,11 @@ Post an image with the given name or id for the bookflow. The only image current
     Date: Mon, 21 Sep 2015 16:44:10 GMT
     Server: nginx/1.9.4
 
-### Scratchpad
+## Scratchpad
 
 Every bookflow has its private scratchpad; a scratchpad is a dictionary of key-value pairs, where keys are strings of 128 characters maximum length and values are `null`, of type `Boolean`, `Number`, or strings of 128 characters maximum length. With every `step` transition of a bookflow, the scratchpad is being erased.
 
-`GET https://bookflow.bookalope.net/api/bookflows/{id}/scratchpad`
+<a name="get-scratchpad"></a>`GET https://bookflow.bookalope.net/api/bookflows/{id}/scratchpad`
 
 Get the current content of a bookflow's scratchpad.
 
@@ -598,7 +654,7 @@ Get the current content of a bookflow's scratchpad.
         "scratchpad": {}
     }
 
-`POST https://bookflow.bookalope.net/api/bookflows/{id}/scratchpad`
+<a name="post-scratchpad"></a>`POST https://bookflow.bookalope.net/api/bookflows/{id}/scratchpad`
 
 Post, i.e. add or update entries of a bookflow's scratchpad. If they `key` does not yet exist, add the key-value pair; if the `key` already exists, update the value only.
 
@@ -629,7 +685,7 @@ Post, i.e. add or update entries of a bookflow's scratchpad. If they `key` does 
     Date: Thu, 23 Jun 2016 21:39:45 GMT
     Server: waitress
 
-`DELETE https://bookflow.bookalope.net/api/bookflows/{id}/scratchpad`
+<a name="delete-scratchpad"></a>`DELETE https://bookflow.bookalope.net/api/bookflows/{id}/scratchpad`
 
 Delete and clear the content of a bookflow's scratchpad. Note that Bookalope executes this function with every `step` transition of a bookflow.
 
@@ -654,9 +710,9 @@ Delete and clear the content of a bookflow's scratchpad. Note that Bookalope exe
     Date: Thu, 23 Jun 2016 21:40:03 GMT
     Server: waitress
 
-### Conversion and Download
+## Conversion and Download
 
-`GET https://bookflow.bookalope.net/api/formats`
+<a name="get-styles"></a>`GET https://bookflow.bookalope.net/api/formats`
 
 Get two lists of supported import and export file formats that Bookalope supports. Both import and export lists contain two-element dictionaries, where the `mime` key holds the mime type of the file format and the `exts` key holds a list of file name extensions for the file format.
 
@@ -721,7 +777,7 @@ Get two lists of supported import and export file formats that Bookalope support
         }
     }
 
-`GET https://bookflow.bookalope.net/api/styles`
+<a name="get-formats"></a>`GET https://bookflow.bookalope.net/api/styles`
 
 Get information about the available visual styles for one or for all target book formats.
 
@@ -758,7 +814,7 @@ Get information about the available visual styles for one or for all target book
         ]
     }
 
-`GET https://bookflow.bookalope.net/api/bookflows/{id}/convert`
+<a name="get-bookflows-convert"></a>`GET https://bookflow.bookalope.net/api/bookflows/{id}/convert`
 
 Convert and download the document into a target format and styling.
 

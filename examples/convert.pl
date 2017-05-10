@@ -61,6 +61,9 @@ sub make_request {
     if ($response->is_success) {
         if ($response->header('Content-Type') eq 'application/json; charset=UTF-8') {
             my $json_body = $response->decoded_content;
+            if ($json_body eq 'null') {
+                return;
+            }
             return decode_json($json_body);
         }
         my $disp = $response->header('Content-Disposition');

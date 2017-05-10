@@ -209,7 +209,7 @@ class BookalopeClient(object):
         books = self.http_get("/api/books")
         return [Book(self, _) for _ in books["books"]]
 
-    def create_book(self):
+    def create_book(self, name=None):
         """
         Create a new Book instance with the given name. Note that the books has
         not been saved to the Bookalope server yet, and needs to be saved. The
@@ -218,7 +218,7 @@ class BookalopeClient(object):
 
         :returns: A Book instance for the new book.
         """
-        return Book(self)
+        return Book(self, name=name)
 
 
 class Profile(object):
@@ -442,7 +442,7 @@ class Book(object):
     and other information is stored as part of the Bookflow, not the Book itself.
     """
 
-    def __init__(self, bookalope, id_or_packed=None):
+    def __init__(self, bookalope, id_or_packed=None, name=None):
         """
         Create or initialize a new Book instance. The new Book instance is created
         on the Bookalope server and this instance is initialized with the new
@@ -458,7 +458,7 @@ class Book(object):
         self.__bookalope = bookalope
         if id_or_packed is None:
             params = {
-                "name": "<none>",
+                "name": name or "<none>",
                 }
             url = "/api/books"
             book = self.__bookalope.http_post(url, params)["book"]
@@ -571,12 +571,12 @@ class Book(object):
         """Return a list of Bookflow instances associated with this Book."""
         return self.__bookflows
 
-    def create_bookflow(self):
+    def create_bookflow(self, name=None, title=None):
         """
         Create a new Bookflow on the Bokalope server and return an initialized
         Bookflow instance.
         """
-        bookflow = Bookflow(self.__bookalope, self)
+        bookflow = Bookflow(self.__bookalope, self, name=name, title=title)
         self.__bookflows += [bookflow]
         return bookflow
 
@@ -589,7 +589,7 @@ class Bookflow(object):
     class.
     """
 
-    def __init__(self, bookalope, book, id_or_packed=None):
+    def __init__(self, bookalope, book, id_or_packed=None, name=None, title=None):
         """
         Create or initialize a new Bookflow instance. The new bookflow is created
         on the Bookalope server side, and this Bookflow instance is then initialized
@@ -609,8 +609,8 @@ class Bookflow(object):
         self.__bookalope = bookalope
         if id_or_packed is None:
             params = {
-                "name": "Bookflow",
-                "title": "<no-title>",
+                "name": name or "Bookflow",
+                "title": title or "<no-title>",
                 }
             url = "/api/books/{}/bookflows".format(book.id)
             bookflow = self.__bookalope.http_post(url, params)["bookflow"]
@@ -895,7 +895,7 @@ class Bookflow(object):
             }
         return self.__bookalope.http_post(self.url + "/files/document", params)
 
-    def convert(self, format_, style, version="test"):
+    def convert(self, format_, style=None, version="test"):
         """
         Convert and download this bookflow's document. Note that downloading a
         'test' version shuffles the letters of random words, thus making the
@@ -910,7 +910,7 @@ class Bookflow(object):
         """
         params = {
             "format": format_,
-            "styling": style.short_name,
+            "styling": style.short_name if style else "default",
             "version": version,
             }
         return self.__bookalope.http_get(self.url + "/convert", params)

@@ -712,7 +712,7 @@ Delete and clear the content of a bookflow's scratchpad. Note that Bookalope exe
 
 ## Conversion and Download
 
-<a name="get-styles"></a>`GET https://bookflow.bookalope.net/api/formats`
+<a name="get-formats"></a>`GET https://bookflow.bookalope.net/api/formats`
 
 Get two lists of supported import and export file formats that Bookalope supports. Both import and export lists contain two-element dictionaries, where the `mime` key holds the mime type of the file format and the `exts` key holds a list of file name extensions for the file format.
 
@@ -777,7 +777,7 @@ Get two lists of supported import and export file formats that Bookalope support
         }
     }
 
-<a name="get-formats"></a>`GET https://bookflow.bookalope.net/api/styles`
+<a name="get-styles"></a>`GET https://bookflow.bookalope.net/api/styles`
 
 Get information about the available visual styles for one or for all target book formats.
 

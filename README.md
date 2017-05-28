@@ -52,7 +52,8 @@ Bookalope's object model is *lazy* in a sense that the user may change the prope
 
 **Supported Languages.**
 
-| Language | Wrapper and documentation |
-|----------|---------------------------|
-| Python 3 | [Source code](https://github.com/jenstroeger/Bookalope/blob/master/clients/py/bookalope.py) and example [convert.py](https://github.com/jenstroeger/Bookalope/blob/master/examples/convert.py) |
-| PHP5     | [Source code](https://github.com/jenstroeger/Bookalope/blob/master/clients/php/bookalope.php) and example [convert.php](https://github.com/jenstroeger/Bookalope/blob/master/examples/convert.php) |
+| Language   | Wrapper and documentation |
+|------------|---------------------------|
+| Python 3   | [Source code](https://github.com/jenstroeger/Bookalope/blob/master/clients/py/bookalope.py) and example [convert.py](https://github.com/jenstroeger/Bookalope/blob/master/examples/convert.py) |
+| PHP5       | [Source code](https://github.com/jenstroeger/Bookalope/blob/master/clients/php/bookalope.php) and example [convert.php](https://github.com/jenstroeger/Bookalope/blob/master/examples/convert.php) |
+| Javascript | [Source code](https://github.com/jenstroeger/Bookalope/blob/master/clients/javascript/bookalope.js) and example [convert.html](https://github.com/jenstroeger/Bookalope/blob/master/examples/convert.html) |

@@ -59,7 +59,7 @@ sub make_request {
     }
     $response = $ua->request($request);
     if ($response->is_success) {
-        if ($response->header('Content-Type') eq 'application/json; charset=UTF-8') {
+        if (substr($response->header('Content-Type'), 0, 16) eq 'application/json') {
             my $json_body = $response->decoded_content;
             if ($json_body eq 'null') {
                 return;

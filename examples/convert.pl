@@ -92,6 +92,30 @@ sub delete_request {
     return make_request('DELETE', @_);
 }
 
+# Helper function to trigger conversion of a document, wait for that conversion
+# to finish, and then download the final book.
+
+sub convert_and_download {
+    my ($api_bookflows, $format) = @_;
+    my $api_convert = "$api_bookflows/convert";
+
+    say 'Converting document to ' . $format . ' and waiting for it to finish...';
+    my $convert_info = post_request($api_convert, {'format' => $format, 'style' => 'default', 'version' => 'test'});
+    my $download_id = $convert_info->{'download_id'};
+    my $api_download = substr("$api_bookflows/download/$download_id", 4);  # /download URLs have no /api/ path segment.
+    my $api_download_status = "$api_download/status";
+    do {
+        sleep 5;
+        $convert_info = get_request($api_download_status);
+        if ($convert_info->{'status'} eq 'failed') {
+            die 'Conversion to ' . $format . ' failed!';
+        }
+    } while ($convert_info->{'status'} ne 'ok');
+
+    say 'Downloading ' . $format . '...';
+    return get_request($api_download);
+}
+
 # Base URL for the API.
 my $api = '/api';
 
@@ -112,6 +136,16 @@ say 'Uploading document...';
 my $api_document = "$api_bookflows/files/document";
 post_request($api_document, {'filetype' => 'doc', 'filename' => basename($filename), 'file' => encode_base64(read_file($filename))});
 
+# Wait until the bookflow has finished processing.
+say 'Waiting for bookflow to finish...';
+do {
+    sleep 5;
+    $bookflow = get_request($api_bookflows);
+} while ($bookflow->{'bookflow'}->{'step'} eq 'processing');
+if ($bookflow->{'bookflow'}->{'step'} eq 'processing_failed') {
+    die 'Processing of bookflow ' . $bookflow_id . ' failed, aborting!'
+}
+
 # Upload the cover image, if one was given.
 if ($cover) {
     say 'Uploading cover image...';
@@ -119,15 +153,15 @@ if ($cover) {
     post_request($api_cover, {'name' => 'cover-image', 'filename' => basename($cover), 'file' => encode_base64(read_file($cover))});
 }
 
-# Download the converted files.
-say 'Downloading converted books...';
-my $api_convert = "$api/bookflows/$bookflow_id/convert";
-write_file($bookflow_id . '.epub', get_request($api_convert, {'format' => 'epub', 'version' => 'test'}));
-write_file($bookflow_id . '.mobi', get_request($api_convert, {'format' => 'mobi', 'version' => 'test'}));
-write_file($bookflow_id . '.pdf', get_request($api_convert, {'format' => 'pdf', 'version' => 'test'}));
-write_file($bookflow_id . '.icml', get_request($api_convert, {'format' => 'icml', 'version' => 'test'}));
-write_file($bookflow_id . '.docx', get_request($api_convert, {'format' => 'docx', 'version' => 'test'}));
-write_file($bookflow_id . '.xml', get_request($api_convert, {'format' => 'docbook', 'version' => 'test'}));
+# Convert and download the files.
+# TODO Use threads for parallel conversion: https://perldoc.perl.org/perlthrtut.html
+write_file($bookflow_id . '.epub', convert_and_download($api_bookflows, 'epub'));
+write_file($bookflow_id . '.mobi', convert_and_download($api_bookflows, 'mobi'));
+write_file($bookflow_id . '.pdf', convert_and_download($api_bookflows, 'pdf'));
+write_file($bookflow_id . '.icml', convert_and_download($api_bookflows, 'icml'));
+write_file($bookflow_id . '.docx', convert_and_download($api_bookflows, 'docx'));
+write_file($bookflow_id . '.xml', convert_and_download($api_bookflows, 'docbook'));
+write_file($bookflow_id . 'html.', convert_and_download($api_bookflows, 'htmlbook'));
 
 # Delete the book and all of its data.
 delete_request("$api/books/$book_id");

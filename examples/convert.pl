@@ -109,13 +109,13 @@ post_request($api_bookflows, {'name' => 'Bookflow 1', 'title' => $title, 'author
 
 # Upload the document.
 say 'Uploading document...';
-my $api_document = "$api/bookflows/$bookflow_id/files/document";
+my $api_document = "$api_bookflows/files/document";
 post_request($api_document, {'filetype' => 'doc', 'filename' => basename($filename), 'file' => encode_base64(read_file($filename))});
 
 # Upload the cover image, if one was given.
 if ($cover) {
     say 'Uploading cover image...';
-    my $api_cover = "$api/bookflows/$bookflow_id/files/image";
+    my $api_cover = "$api_bookflows/files/image";
     post_request($api_cover, {'name' => 'cover-image', 'filename' => basename($cover), 'file' => encode_base64(read_file($cover))});
 }
 

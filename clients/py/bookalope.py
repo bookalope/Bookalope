@@ -23,14 +23,27 @@ def _is_token(token_s):
     return re.match(r"^[0-9a-f]{32}$", token_s or "") is not None
 
 
-class TokenError(Exception):
+class BookalopeError(Exception):
+    """
+    Base class for all Bookalope related errors.
+    """
+
+
+class TokenError(BookalopeError):
     """
     A TokenError is raised whenever a Bookalope ID or auth token is expected but
     not provided. See the _is_token() function.
     """
     def __init__(self, token=""):
         message = "Invalid Bookalope token: " + (token or "<not set>")
-        super(TokenError, self).__init__(message)
+        super().__init__(message)
+
+
+class BookflowError(BookalopeError):
+    """
+    A BookflowError is raised whenever an operation on a Bookflow can not be
+    executed or failed.
+    """
 
 
 class BookalopeClient(object):
@@ -604,6 +617,7 @@ class Bookflow(object):
         :param str id_or_packed: None to create a new Bookflow instance; a valid
                                  Bookalope token string with a bookflow id; or
                                  a dictionary containing packed bookflow information.
+        :raises: BookflowError if the Bookflow's book and the specified book are different.
         """
         assert isinstance(bookalope, BookalopeClient)
         self.__bookalope = bookalope
@@ -619,6 +633,8 @@ class Bookflow(object):
                 raise TokenError(id_or_packed)
             url = "/api/bookflows/{}".format(id_or_packed)
             bookflow = self.__bookalope.http_get(url)["bookflow"]
+            if bookflow.book.id != book.id:
+                raise BookflowError("Book and Bookflow's book are not the same")
         elif isinstance(id_or_packed, dict):
             bookflow = id_or_packed
         else:

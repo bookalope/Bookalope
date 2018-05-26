@@ -623,6 +623,7 @@ class Bookflow(object):
             bookflow = id_or_packed
         else:
             raise TypeError()
+        # BUGBUG: I can pass a Bookflow from a different Book here.
         self.__id = bookflow["id"]
         self.__name = bookflow["name"]
         self.__step = bookflow["step"]

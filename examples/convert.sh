@@ -57,17 +57,50 @@ if [ `builtin type -p http` ]; then
     # Upload the manuscript which automatically converts it using defaults.
     echo "Uploading and analyzing book document..."
     base64 "$DOCFILE" > "$TMPDIR/$DOCNAME.base64"
-    http --json --timeout 300 --auth $TOKEN: POST $APIHOST/api/bookflows/$BOOKFLOWID/files/document file=@"$TMPDIR/$DOCNAME.base64" filename="$DOCNAME" filetype=doc
+    http --json --auth $TOKEN: POST $APIHOST/api/bookflows/$BOOKFLOWID/files/document file=@"$TMPDIR/$DOCNAME.base64" filename="$DOCNAME" filetype=doc
+
+    # Wait until the bookflow's step changes from 'processing' to 'convert'.
+    echo "Waiting for bookflow to finish..."
+    while [ 1 ]; do
+        sleep 5
+        STEP=`http --json --print=b --auth $TOKEN: GET $APIHOST/api/bookflows/$BOOKFLOWID | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['bookflow']['step']);"`
+        if [ "$STEP" = "convert" ]; then
+            break
+        fi
+        if [ "$STEP" = "processing_failed" ]; then
+            echo "Bookalope failed to analyze the document, exiting"
+            exit 1
+        fi
+    done
     echo "Done"
 
-    # Download the converted results.
+    # Convert and download the books in a parallel batch.
+    # Regarding < /dev/tty see: https://github.com/jakubroztocil/httpie/issues/150#issuecomment-21419373
     echo "Converting and downloading books..."
-    http --download --timeout 300 --auth $TOKEN: GET $APIHOST/api/bookflows/$BOOKFLOWID/convert format==epub version==test
-    http --download --timeout 300 --auth $TOKEN: GET $APIHOST/api/bookflows/$BOOKFLOWID/convert format==mobi version==test
-    http --download --timeout 300 --auth $TOKEN: GET $APIHOST/api/bookflows/$BOOKFLOWID/convert format==pdf version==test
-    http --download --timeout 300 --auth $TOKEN: GET $APIHOST/api/bookflows/$BOOKFLOWID/convert format==icml version==test
-    http --download --timeout 300 --auth $TOKEN: GET $APIHOST/api/bookflows/$BOOKFLOWID/convert format==docx version==test
-    http --download --timeout 300 --auth $TOKEN: GET $APIHOST/api/bookflows/$BOOKFLOWID/convert format==docbook version==test
+    function convert_book {
+        DOWNLOAD_URL=`http --auth $TOKEN: POST $APIHOST/api/bookflows/$BOOKFLOWID/convert format=$1 version=test < /dev/tty | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['download_url'])"`
+        while [ 1 ]; do
+            sleep 5
+            STATUS=`http --auth $TOKEN: GET $DOWNLOAD_URL/status < /dev/tty | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['status']);"`
+            case "$STATUS" in
+            "processing")
+                ;;
+            "failed")
+                echo "Bookalope failed to convert the book, exiting"
+                exit 1
+                ;;
+            "ok")
+                break
+                ;;
+            esac
+        done
+        http --download --auth $TOKEN: GET $DOWNLOAD_URL > /dev/tty
+    }
+    export -f convert_book
+    export TOKEN
+    export APIHOST
+    export BOOKFLOWID
+    parallel --env TOKEN --env APIHOST --env BOOKFLOWID ::: "convert_book \"epub\"" "convert_book \"epub3\"" "convert_book \"mobi\"" "convert_book \"pdf\"" "convert_book \"icml\"" "convert_book \"docx\"" "convert_book \"docbook\"" "convert_book \"htmlbook\""
     echo "Done"
 
     # Delete the book and all of its bookflows.
@@ -103,14 +136,48 @@ else
         curl --user $TOKEN: --header "Content-Type: application/json" --data @"$TMPDIR/$DOCNAME.json" --request POST $APIHOST/api/bookflows/$BOOKFLOWID/files/document
         echo "Done"
 
-        # Download the converted results.
+        # Wait until the bookflow's step changes from 'processing' to 'convert'.
+        echo "Waiting for bookflow to finish..."
+        while [ 1 ]; do
+            sleep 5
+            STEP=`curl --user $TOKEN: --header "Content-Type: application/json" --request GET $APIHOST/api/bookflows/$BOOKFLOWID | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['bookflow']['step']);"`
+            if [ "$STEP" = "convert" ]; then
+                break
+            fi
+            if [ "$STEP" = "processing_failed" ]; then
+                echo "Bookalope failed to analyze the document, exiting"
+                exit 1
+            fi
+        done
+        echo "Done"
+
+        # Convert and download the books in a parallel batch.
+        # Regarding < /dev/tty see: https://github.com/jakubroztocil/httpie/issues/150#issuecomment-21419373
         echo "Converting and downloading books..."
-        curl --user $TOKEN: --output $BOOKFLOWID.epub --request GET $APIHOST/api/bookflows/$BOOKFLOWID/convert?format=epub\&version=test
-        curl --user $TOKEN: --output $BOOKFLOWID.mobi --request GET $APIHOST/api/bookflows/$BOOKFLOWID/convert?format=mobi\&version=test
-        curl --user $TOKEN: --output $BOOKFLOWID.pdf --request GET $APIHOST/api/bookflows/$BOOKFLOWID/convert?format=pdf\&version=test
-        curl --user $TOKEN: --output $BOOKFLOWID.icml --request GET $APIHOST/api/bookflows/$BOOKFLOWID/convert?format=icml\&version=test
-        curl --user $TOKEN: --output $BOOKFLOWID.docx --request GET $APIHOST/api/bookflows/$BOOKFLOWID/convert?format=docx\&version=test
-        curl --user $TOKEN: --output $BOOKFLOWID.xml --request GET $APIHOST/api/bookflows/$BOOKFLOWID/convert?format=docbook\&version=test
+        function convert_book {
+            DOWNLOAD_URL=`curl --user $TOKEN: --header "Content-Type: application/json" --data '{"format":"'$1'", "version":"test"}' --request POST $APIHOST/api/bookflows/$BOOKFLOWID/convert < /dev/tty | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['download_url'])"`
+            while [ 1 ]; do
+                sleep 5
+                STATUS=`curl --user $TOKEN: --header "Content-Type: application/json" --request GET $DOWNLOAD_URL/status < /dev/tty | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['status']);"`
+                case "$STATUS" in
+                "processing")
+                    ;;
+                "failed")
+                    echo "Bookalope failed to convert the book, exiting"
+                    exit 1
+                    ;;
+                "ok")
+                    break
+                    ;;
+                esac
+            done
+            curl --user $TOKEN: --remote-name --remote-header-name --request GET $DOWNLOAD_URL > /dev/tty
+        }
+        export -f convert_book
+        export TOKEN
+        export APIHOST
+        export BOOKFLOWID
+        parallel --env TOKEN --env APIHOST --env BOOKFLOWID ::: "convert_book \"epub\"" "convert_book \"epub3\"" "convert_book \"mobi\"" "convert_book \"pdf\"" "convert_book \"icml\"" "convert_book \"docx\"" "convert_book \"docbook\"" "convert_book \"htmlbook\""
         echo "Done"
 
         # Delete the book and all of its bookflows.

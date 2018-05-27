@@ -102,7 +102,7 @@ class BookalopeClient(object):
         """
         response = requests.get(self.__host + url, params=params, auth=(self.__token, ""))
         if response.status_code == requests.codes.ok:
-            if response.headers["Content-Type"] == "application/json; charset=UTF-8":
+            if response.headers["Content-Type"].startswith("application/json"):
                 return response.json()
             if response.headers["Content-Disposition"].startswith("attachment"):
                 return response.content
@@ -129,8 +129,7 @@ class BookalopeClient(object):
             if int(response.headers["Content-Length"]):
                 # TODO: Check that Content-Type is JSON?
                 return response.json()
-            else:
-                return None
+            return None
         response.raise_for_status()
         assert not "Implement: missed a success code"
 
@@ -338,6 +337,7 @@ class Format(object):
 
         :param dict packed: A dictionary containing packed Format information.
         """
+        self.__name = packed["name"]
         self.__mime = packed["mime"]
         self.__file_extensions = packed["exts"]
 
@@ -359,10 +359,16 @@ class Format(object):
                        dictionary.
         """
         packed = {
+            "name": self.__name,
             "mime": self.__mime,
             "exts": self.__file_extensions,
             }
         return packed
+
+    @property
+    def name(self):
+        """Return the short name of this format."""
+        return self.__name
 
     @property
     def mimetype(self):
@@ -654,6 +660,7 @@ class Bookflow(object):
         self.__language = None
         self.__pubdate = None
         self.__publisher = None
+        self.__conversions = dict()
 
     def __repr__(self):
         """Return a printable representation of this instance."""
@@ -694,6 +701,8 @@ class Bookflow(object):
         Delete this Bookflow from the Bookalope server. Subsequent calls to save()
         will fail on the server side.
         """
+        if self.processing:
+            raise BookflowError("Unable to delete a processing bookflow")
         # TODO: Remove this Bookflow from the Book's list.
         return self.__bookalope.http_delete(self.url)
 
@@ -846,6 +855,11 @@ class Bookflow(object):
         """Set this bookflow's book's publisher string."""
         self.__publisher = publisher
 
+    @property
+    def processing(self):
+        """Return True if the bookflow is currently being processed; False otherwise."""
+        return self.step == "processing"
+
     def get_cover_image(self):
         """Download the cover image as a byte array from the Bookalope server."""
         return self.get_image("cover-image")
@@ -881,6 +895,8 @@ class Bookflow(object):
         :param str image_filename: The file name of the cover image.
         :param image_bytes: A byte array containing the image.
         """
+        if self.step != "convert":
+            raise BookflowError("Can't add image, bookflow must be in 'convert' step")
         params = {
             "name": name,
             "filename": image_filename,
@@ -898,36 +914,91 @@ class Bookflow(object):
         """
         Upload a document for this bookflow. This will start the style analysis,
         and automatically extract the content and structure of the document using
-        Bookalope's default heuristics. Once this call returns, the document is
-        ready for conversion.
+        Bookalope's default heuristics. Switches the bookflow's `step` property
+        to 'processing', and then to 'convert' once the document analysis has
+        finished and the document can be converted.
 
         :param str document_filename: The file name of the document.
         :param document_bytes: A byte array containing the document.
         """
+        if self.step != "files":
+            raise BookflowError("Unable to set document because one is already set")
         # TODO: Check that bytes are not of an unsupported format.
         params = {
             "filetype": "doc",
             "filename": document_filename,
             "file": base64.b64encode(document_bytes).decode(),
             }
-        return self.__bookalope.http_post(self.url + "/files/document", params)
+        self.__bookalope.http_post(self.url + "/files/document", params)
+        self.__step = "processing"  # Server does the same.
 
     def convert(self, format_, style=None, version="test"):
         """
-        Convert and download this bookflow's document. Note that downloading a
-        'test' version shuffles the letters of random words, thus making the
+        Initiate the conversion of a bookflow's document. Note that converting
+        a 'test' version shuffles the letters of random words, thus making the
         document rather useless for anything but testing purposes.
 
-        :param str format: A valid format string, one of 'epub', 'epub3', 'mobi',
-                           'pdf', 'icml', 'docx'.
+        :param str format_: A valid format string, one of 'epub', 'epub3', 'mobi',
+                           'pdf', 'icml', 'docx', 'docbook', 'htmlbook'.
         :param style: A Style instance describing the styling for the converted
                       document.
         :param str version: Either a 'test' or 'final' version of the document.
-        :returns: Returns the converted document.
         """
+        if self.step != "convert":
+            raise BookflowError("Can't convert document, bookflow must be in 'convert' step")
+        styling = style.short_name if style else "default"
+        # Check if a conversion already exists and is maybe available.
+        conversion_key = "{}-{}-{}".format(format_, styling, version)
+        conversion = self.__conversions.get(conversion_key, None)
+        if conversion:
+            status = conversion["status"]
+            if status == "processing":
+                return  # Conversion already in progress, do nothing.
+            if status == "ok":
+                return  # Conversion has finished and download is available, do nothing.
+        # Initiate a new conversion on the server.
         params = {
             "format": format_,
-            "styling": style.short_name if style else "default",
+            "styling": styling,
             "version": version,
             }
-        return self.__bookalope.http_get(self.url + "/convert", params)
+        conversion = self.__bookalope.http_post(self.url + "/convert", params)
+        self.__conversions[conversion_key] = conversion
+
+    def convert_status(self, format_, style=None, version="test"):
+        """
+        Check the status of the bookflow's file conversion for the specified format, style,
+        and version.
+
+        :param str format_: Same as `convert` method.
+        :param style: Same as `convert` method.
+        :param str version: Same as `convert` method.
+        :return: A string that is either 'processing', 'ok' (conversion finished), 'failed',
+                 or 'na' (no conversion initiated yet).
+        """
+        styling = style.short_name if style else "default"
+        conversion_key = "{}-{}-{}".format(format_, styling, version)
+        conversion = self.__conversions.get(conversion_key, None)
+        if conversion is None:
+            return "na"
+        conversion = self.__bookalope.http_get(self.url + "/download/" + conversion["download_id"] + "/status")
+        return conversion["status"]
+
+    def convert_download(self, format_, style=None, version="test"):
+        """
+        Once `convert_status` method returns 'ok', the converted file can be downloaded
+        and is returned by this method.
+
+        :param str format_: Same as `convert` method.
+        :param style: Same as `convert` method.
+        :param str version: Same as `convert` method.
+        :return: A bytes object containing the converted document, or None if converted document
+                 was not available (status 'na').
+        :raises: A HTTPException (Bad Request) if the conversion was not in 'ok' status.
+        """
+        styling = style.short_name if style else "default"
+        conversion_key = "{}-{}-{}".format(format_, styling, version)
+        conversion = self.__conversions.get(conversion_key, None)
+        if conversion is None:
+            return None  # raise BookflowError?
+        return self.__bookalope.http_get(self.url + "/download/" + conversion["download_id"])

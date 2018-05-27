@@ -10,6 +10,8 @@ documentation of the module.
 import os
 import sys
 import argparse
+import time
+import asyncio
 
 import bookalope
 
@@ -55,6 +57,15 @@ def main():
         _, fname = os.path.split(doc.name)
         bookflow.set_document(fname, doc.read())
 
+    # Wait for analysis of the uploaded document to finish.
+    print("Waiting for bookflow to finish analyzing...")
+    while bookflow.processing:
+        time.sleep(5)
+        bookflow.update()
+    if bookflow.step == "processing_failed":
+        print("Failed to analyze document, exiting")
+        return 1
+
     # If specified, upload the cover image for the book.
     if args.cover:
         print("Uploading cover image...")
@@ -64,23 +75,44 @@ def main():
 
     # Get a list of all supported export file name extensions. Bookalope accepts
     # them as arguments to specify the target file format for conversion.
-    formats = [fext for format_ in b_client.get_export_formats() for fext in format_.file_exts]
+    formats = [format_.name for format_ in b_client.get_export_formats()]
+
+    # Asynchronous coroutine that converts the bookflow's file to the given format.
+    async def _convert_and_save(format_):
+        """Coroutine to convert the bookflow's file to the given format."""
+        print(f"Converting and downloading {format_}...")
+
+        # Get the Style instance for the default styling, test version, and trigger conversion.
+        styles = b_client.get_styles(format_)
+        default_style = next(_ for _ in styles if _.short_name == "default")
+        version = "test"
+        bookflow.convert(format_, default_style, version)
+
+        # Wait for the conversion to finish.
+        while True:
+            status = bookflow.convert_status(format_, default_style, version)
+            if status == "processing":
+                await asyncio.sleep(5)
+                continue
+            if status == "ok":
+                break
+            print(f"Conversion of {format_} failed, skipping...")
+            return 1
+
+        # Save the converted document.
+        fname = f"{bookflow.id}.{format_}"
+        with open(fname, "wb") as f:
+            fbytes = bookflow.convert_download(format_, default_style, version)
+            f.write(fbytes)
+        return 0
 
     # Convert and download the document. For every format that we download we
     # use the 'default' styling, and we download the 'test' version to avoid
     # charges to our credit card.
-    for format_ in formats:
-        print("Converting and downloading " + format_ + "...")
-
-        # Get the Style instance for the default styling.
-        styles = b_client.get_styles(format_)
-        default_style = next(_ for _ in styles if _.short_name == "default")
-        converted_bytes = bookflow.convert(format_, default_style, version="test")
-
-        # Save the converted document.
-        fname = "{}.{}".format(bookflow.id, format_)
-        with open(fname, "wb") as doc_conv:
-            doc_conv.write(converted_bytes)
+    loop = asyncio.new_event_loop()
+    future = asyncio.gather(*[_convert_and_save(format_) for format_ in formats], loop=loop)
+    results = loop.run_until_complete(future)
+    loop.close()
 
     # Delete the book and all of its bookflows.
     print("Deleting book and all bookflows...")
@@ -92,4 +124,5 @@ def main():
 
 
 if __name__ == "__main__":
+    assert sys.version_info >= (3, 6)
     sys.exit(main())

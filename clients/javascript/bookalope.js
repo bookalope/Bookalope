@@ -8,9 +8,9 @@
  * @returns {boolean} True if the given string is a Bookalope token or ID.
  */
 
-var isToken = function(token) {
+function isToken(token) {
   return new RegExp("^[0-9a-f]{32}$").test(token);
-};
+}
 
 
 /**
@@ -22,11 +22,11 @@ var isToken = function(token) {
  * @throws {BookalopeError} The given condition must be true.
  */
 
-var assert = function(condition, message) {
+function assert(condition, message) {
   if (!condition) {
     throw new BookalopeError("Assertion failed: " + message);
   }
-};
+}
 
 
 /**
@@ -120,12 +120,12 @@ BookalopeClient.prototype._httpRequest = function(url, method, params, options) 
         if (typeof this.response === "string") {
           try {
             var json_errors = JSON.parse(this.response);
-            if (json_errors["errors"] !== undefined) {
-              var errors = json_errors["errors"];
+            if (json_errors.errors !== undefined) {
+              var errors = json_errors.errors;
               if (errors.length === 1) {
                 var error = errors[0];
-                if (error["description"] !== undefined) {
-                  reject(new BookalopeError("Client error: " + error["description"]));
+                if (error.description !== undefined) {
+                  reject(new BookalopeError("Client error: " + error.description));
                 }
               } else {
                 // TODO How should we handle multiple errors?
@@ -288,7 +288,7 @@ BookalopeClient.prototype.getStyles = function(format) {
   return new Promise(function(resolve, reject) {
     var url = "/api/styles";
     var params = {
-      format: format,
+      format: format
     };
     bookalope.httpGET(url, params)
     .then(function(response) {
@@ -358,7 +358,7 @@ BookalopeClient.prototype.getImportFormats = function() {
       // Create and populate a list of Format instances from the response data.
       var formatsList = [];
       response.formats.import.forEach(function(format) {
-        formatsList.push(new Format(format.mime, format.exts));
+        formatsList.push(new Format(format.name, format.mime, format.exts));
       });
 
       resolve(formatsList);
@@ -416,7 +416,7 @@ BookalopeClient.prototype.createBook = function(name) {
   return new Promise(function(resolve, reject) {
     var url = "/api/books";
     var params = {
-      "name": name || "<none>",
+      "name": name || "<none>"
     };
     bookalope.httpPOST(url, params)
     .then(function(response) {
@@ -494,7 +494,7 @@ Profile.prototype.save = function() {
     var url = "/api/profile";
     var params = {
       firstname: profile.firstname,
-      lastname: profile.lastname,
+      lastname: profile.lastname
     };
     bookalope.httpPOST(url, params)
     .then(function(response) {
@@ -517,7 +517,8 @@ Profile.prototype.save = function() {
  * @constructor
  */
 
-var Format = function(mime, exts) {
+var Format = function(name, mime, exts) {
+  this.name = name;
   this.mime = mime;
   this.fileExts = exts;
 };
@@ -568,7 +569,7 @@ var Book = function(bookalope, idOrJson) {
     if (book.bookflows) {
       book.bookflows.forEach(function(bookflow) {
         this.bookflows.push(new Bookflow(this._bookalope, this, bookflow));
-      }.bind(this));
+      }, this);
     }
   } else if (typeof idOrJson === "string") {
     assert(isToken(idOrJson), "Malformed Bookalope token: " + idOrJson);
@@ -630,7 +631,7 @@ Book.prototype.save = function() {
   return new Promise(function(resolve, reject) {
     var url = book.url;
     var params = {
-      name: this.name,
+      name: this.name
     };
     bookalope.httpPOST(url, params)
     .then(function(response) {
@@ -719,7 +720,7 @@ Book.prototype.createBookflow = function(name, title) {
     var url = book.url + "/bookflows";
     var params = {
       "name": name || "Bookflow",
-      "title": title || "<no-title>",
+      "title": title || "<no-title>"
     };
     bookalope.httpPOST(url, params)
     .then(function(response) {
@@ -759,8 +760,8 @@ var Bookflow = function(bookalope, book, idOrJson) {
   this.book = book;
 
   if (typeof idOrJson === "object") {
+    // Trust the JSON: Bookflow really does belong to the Book.
     var bookflow = idOrJson;
-    // BUGBUG: I can pass a Bookflow from a different Book here.
     this.id = bookflow.id;
     this.url = "/api/bookflows/" + this.id;
     this.name = bookflow.name;
@@ -773,10 +774,12 @@ var Bookflow = function(bookalope, book, idOrJson) {
     this.language = undefined;
     this.pubdate = undefined;
     this.publisher = undefined;
+    this.conversions = new Map();
   } else if (typeof idOrJson === "string") {
     assert(isToken(idOrJson), "Malformed Bookalope token: " + idOrJson);
     this.id = idOrJson;
     this.url = "/api/bookflows/" + this.id;
+    this.conversions = new Map();
   }
   else {
     throw new BookalopeError("Unable to initialize Bookflow, incorrect parameter");
@@ -837,7 +840,7 @@ Bookflow.prototype.save = function() {
   return new Promise(function(resolve, reject) {
     var url = bookflow.url;
     var params = {
-      name: this.name,
+      name: this.name
     };
     // Copy only valid metadata to the parameter array to update on the server.
     var metadata = this.getMetadata();
@@ -948,7 +951,7 @@ Bookflow.prototype.getImage = function(name) {
   return new Promise(function(resolve, reject) {
     var url = bookflow.url + "/files/image";
     var params = {
-      name: name,
+      name: name
     };
     var options = {
       responseType: "blob",
@@ -995,19 +998,23 @@ Bookflow.prototype.addImage = function(name, filename, file) {
   var bookalope = bookflow._bookalope;
 
   return new Promise(function(resolve, reject) {
-    var url = bookflow.url + "/files/image";
-    var params = {
-      name: name,
-      filename: filename,
-      file: btoa(file),
-    };
-    bookalope.httpPOST(url, params)
-    .then(function(response) {
-      resolve(bookflow);
-    })
-    .catch(function(error) {
-      reject(error);
-    });
+    if (bookflow.step !== "convert") {
+      reject(new BookalopeError("Unable to add image if Bookflow is not in 'convert' step."));
+    } else {
+      var url = bookflow.url + "/files/image";
+      var params = {
+        name: name,
+        filename: filename,
+        file: btoa(file)
+      };
+      bookalope.httpPOST(url, params)
+      .then(function(response) {
+        resolve(bookflow);
+      })
+      .catch(function(error) {
+        reject(error);
+      });
+    }
   });
 };
 
@@ -1028,7 +1035,7 @@ Bookflow.prototype.getDocument = function() {
     var url = bookflow.url + "/files/document";
     var params = undefined;
     var options = {
-      responseType: "blob",
+      responseType: "blob"
     };
     bookalope.httpGET(url, params, options)
     .then(function(blob) {
@@ -1044,9 +1051,10 @@ Bookflow.prototype.getDocument = function() {
 /**
  * Upload a document for this bookflow. This will start the style analysis,
  * and automatically extract the content and structure of the document using
- * Bookalope's default heuristics. Once this call returns, the document is
- * ready for conversion. Returns a promise that is fulfilled with the Bookflow
- * or rejected with a BookalopeError.
+ * Bookalope's default heuristics. The bookflow's step changes to 'processing'
+ * until the analysis has finished (new step value becomes 'convert') or failed
+ * (new step value becomes 'processing_failed'). Returns a promise that is
+ * fulfilled with the Bookflow or rejected with a BookalopeError.
  *
  * @async
  * @param {string} filename - The filename of the document.
@@ -1059,29 +1067,33 @@ Bookflow.prototype.setDocument = function(filename, file) {
   var bookalope = bookflow._bookalope;
 
   return new Promise(function(resolve, reject) {
-    var url = bookflow.url + "/files/document";
-    var params = {
-      filename: filename,
-      filetype: "doc",
-      file: btoa(file),
-    };
-    bookalope.httpPOST(url, params)
-    .then(function(response) {
-      resolve(bookflow);
-    })
-    .catch(function(error) {
-      reject(error);
-    });
+    if (bookflow.step !== "files") {
+      reject(new BookalopeError("Unable to set document because one is already set"));
+    } else {
+      var url = bookflow.url + "/files/document";
+      var params = {
+        filename: filename,
+        filetype: "doc",
+        file: btoa(file)
+      };
+      bookalope.httpPOST(url, params)
+      .then(function(response) {
+        bookflow.step = "processing";  // Server does the same.
+        resolve(bookflow);
+      })
+      .catch(function(error) {
+        reject(error);
+      });
+    }
   });
 };
 
 
 /**
- * Convert and download this bookflow's document. Note that downloading a
- * test version shuffles the letters of random words, thus making the
+ * Initiate the conversion of this bookflow's document. Note that converting
+ * a test version shuffles the letters of random words, thus making the
  * document rather useless for anything but testing purposes. Returns a
- * promise that is fulfilled with the Blob of the converted document or
- * rejected with a BookalopeError.
+ * promise that is fulfilled with the Bookflow or rejected with a BookalopeError.
  *
  * @async
  * @param {string} format - The desired format for the converted and downloaded file.
@@ -1095,21 +1107,119 @@ Bookflow.prototype.convert = function(format, style, version) {
   var bookalope = bookflow._bookalope;
 
   return new Promise(function(resolve, reject) {
+    var conversion_key = format + "-" + style + "-" + version;
+    // Check if a conversion already exists and is maybe available.
+    var conversion = bookflow.conversions.get(conversion_key);
+    if (conversion) {
+      if (conversion.status === "processing") {
+        resolve(bookflow);
+        return;
+      } else if (conversion.status === "ok") {
+        resolve(bookflow);
+        return;
+      }
+    }
+    // Initiate a new conversion on the server, even if a conversion existed and
+    // has failed previously.
     var url = bookflow.url + "/convert";
     var params = {
       format: format,
       styling: style || "default",
-      version: version || "test",
+      version: version || "test"
     };
-    var options = {
-      responseType: "blob",
-    };
-    bookalope.httpGET(url, params, options)
-    .then(function(blob) {
-      resolve(blob);
+    bookalope.httpPOST(url, params)
+    .then(function(response) {
+      bookflow.conversions.set(conversion_key, response);
+      resolve(bookflow);
     })
     .catch(function(error) {
       reject(error);
     });
+  });
+};
+
+
+/**
+ * Check the current status of the bookflow's conversion for the specified format,
+ * style, and version. Returns a promise that is fulfilled with the status string
+ * or rejected with a BookalopeError.
+ *
+ * @async
+ * @param {string} format - The desired format for the converted and downloaded file.
+ * @param {string} style - Name of the visual style for the format.
+ * @param {string} version - Either "test" or "final".
+ * @returns {Promise}
+ */
+
+Bookflow.prototype.convert_status = function(format, style, version) {
+  var bookflow = this;
+  var bookalope = bookflow._bookalope;
+
+  return new Promise(function(resolve, reject) {
+    var conversion_key = format + "-" + style + "-" + version;
+    var conversion = bookflow.conversions.get(conversion_key);
+    if (conversion === undefined) {
+      reject(new BookalopeError("Book has not been converted yet"));
+    } else {
+      var url = bookflow.url + "/download/" + conversion.download_id + "/status";
+      var params = {
+        format: format,
+        styling: style || "default",
+        version: version || "test"
+      };
+      bookalope.httpGET(url, params)
+      .then(function(response) {
+        bookflow.conversions.set(conversion_key, response);
+        resolve(response.status);
+      })
+      .catch(function(error) {
+        reject(error);
+      });
+    }
+  });
+};
+
+
+/**
+ * Once the `convert_status()` function returns the status string "ok", then download
+ * the converted file using this function. Returns a promise that is fulfilled with the
+ * downloaded blob or rejected with a BookalopeError.
+ *
+ * @async
+ * @param {string} format - The desired format for the converted and downloaded file.
+ * @param {string} style - Name of the visual style for the format.
+ * @param {string} version - Either "test" or "final".
+ * @returns {Promise}
+ */
+
+Bookflow.prototype.convert_download = function(format, style, version) {
+  var bookflow = this;
+  var bookalope = bookflow._bookalope;
+
+  return new Promise(function(resolve, reject) {
+    var conversion_key = format + "-" + style + "-" + version;
+    var conversion = bookflow.conversions.get(conversion_key);
+    if (conversion === undefined) {
+      reject(new BookalopeError("Book has not been converted yet"));
+    } else if (conversion.status !== "ok") {
+      reject(new BookalopeError("Converted book is not ready for download"));
+    } else {
+      var url = bookflow.url + "/download/" + conversion.download_id;
+      var params = {
+        format: format,
+        styling: style || "default",
+        version: version || "test"
+      };
+      var options = {
+        responseType: "blob"
+      };
+      bookalope.httpGET(url, params, options)
+      .then(function(blob) {
+        resolve(blob);
+      })
+      .catch(function(error) {
+        reject(error);
+      });
+    }
   });
 };

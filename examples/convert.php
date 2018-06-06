@@ -80,35 +80,39 @@ try {
     $docfname = $_FILES["docfile"]["tmp_name"];
     $docf = file_get_contents($docfname);
     if ($docf === FALSE) {
-        throw new BookalopeError("Failed to open and read document.");
+        throw new BookalopeException("Failed to open and read document.");
     }
     $bookflow->set_document($post_docfname, $docf);
+
+    // Wait for the analysis of the uploaded document to finish.
+    while (true) {
+        $bookflow->update();
+        if ($bookflow->step === "processing") {
+            sleep(5);
+        }
+        else if ($bookflow->step === "convert") {
+            break;
+        }
+        else if ($bookflow->step === "processing_failed") {
+            throw new BookalopeException("Failed to analyze document.");
+        }
+    }
 
     // Create a temporary folder and download all generated files into it. Then
     // zip that folder and return it as a response.
     $tmpdname = get_tmp_dir() . DIRECTORY_SEPARATOR . uniqid("bookalope");
     if (mkdir($tmpdname, 0700)) {
 
-        // Get a list of all supported export file name extensions. Bookalope
-        // accepts them as arguments to specify the target file format for
-        // conversion.
-        $format_names = array();
+        // Convert the document into all supported export formats, and download it.
+        // For every format that we download we use the 'default' styling, and we
+        // download the 'test' version to avoid charges to our credit card.
         foreach ($b_client->get_export_formats() as $format) {
-            foreach ($format->file_exts as $fext) {
-                $format_names[] = $fext;
-            }
-        }
-
-        // Convert and download the document. For every format that we download we
-        // use the 'default' styling, and we download the 'test' version to avoid
-        // charges to our credit card.
-        foreach ($format_names as $format) {
-            error_log("Converting and downloading " . $format . "...");
+            error_log("Converting and downloading " . $format->name . "...");
 
             // Get the Style instance for the default styling. Bookalope should
             // always provide such a default styling, so we will assume here that
             // it does.
-            $styles = $b_client->get_styles($format);
+            $styles = $b_client->get_styles($format->name);
             foreach ($styles as $style) {
                 if ($style->short_name === "default") {
                     $default_style = $style;
@@ -116,14 +120,30 @@ try {
                 }
             }
 
-            // Convert the document using the default styling.
-            $converted_bytes = $bookflow->convert($format, $default_style, "test");
+            // Convert the document using the default styling, and wait for the
+            // conversion to finish.
+            $bookflow->convert($format->name, $default_style, "test");
 
-            // Save the converted document.
-            $tmpfname = $bookflow->id . "." . $format;
+            // Wait for the conversion to finish.
+            while (true) {
+                $status = $bookflow->convert_status($format->name, $default_style, "test");
+                if ($status === "processing") {
+                    sleep(5);
+                }
+                else if ($status === "ok") {
+                    break;
+                }
+                else {
+                    throw new BookalopeException("Conversion of " . $format->name . " failed.");
+                }
+            }
+
+            // Download and save the converted document.
+            $converted_bytes = $bookflow->convert_download($format->name, $default_style, "test");
+            $tmpfname = $bookflow->id . "." . $format->file_exts[0];
             if (file_put_contents($tmpdname . DIRECTORY_SEPARATOR . $tmpfname, $converted_bytes) === FALSE) {
                 // throw new BookalopeException("Failed to write converted document.");
-                error_log("Error writing generated " . $format . " file, skipping.");
+                error_log("Error writing generated " . $format->name . " file, skipping.");
             }
         }
 

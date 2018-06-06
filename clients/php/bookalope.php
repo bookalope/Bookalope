@@ -81,7 +81,7 @@ class BookalopeClient {
         }
         list($response, $response_info) = $this->do_curl("GET", $url);
         if ($response_info["http_code"] === 200) {
-            if ($response_info["content_type"] === "application/json; charset=UTF-8") {
+            if (strpos($response_info["content_type"], "application/json") === 0) {
                 return json_decode($response);
             }
             if ($response_info["download_content_length"] > 0) {
@@ -99,7 +99,7 @@ class BookalopeClient {
     public function http_post($url, $params=NULL) {
         list($response, $response_info) = $this->do_curl("POST", $url, $params);
         if ($response_info["http_code"] === 200 or $response_info["http_code"] === 201) {
-            if ($response_info["content_type"] === "application/json; charset=UTF-8") {
+            if (strpos($response_info["content_type"], "application/json") === 0) {
                 return json_decode($response);
             }
             return NULL;
@@ -251,11 +251,13 @@ class Style {
 class Format {
 
     // Public attributes of a Bookalope Format.
+    public $name;
     public $mime;
     public $file_exts;
 
     // Constructor. Initialize from a packed format object.
     public function __construct($packed) {
+        $this->name = $packed->name;
         $this->mime = $packed->mime;
         $this->file_exts = $packed->exts;
     }
@@ -404,12 +406,16 @@ class Bookflow {
         $this->language = NULL;
         $this->pubdate = NULL;
         $this->publisher = NULL;
+        // Associative array to track document conversions.
+        $this->conversions = array();
     }
 
     // Query the Bookalope server for this Bookflow's server-side data, and
     // update this instance with that data.
     public function update() {
         $bookflow = $this->bookalope->http_get($this->url)->bookflow;
+        $this->step = $bookflow->step;
+        // Metadata
         $this->title = $bookflow->title;
         $this->author = $bookflow->author;
         $this->copyright = $bookflow->copyright;
@@ -500,16 +506,61 @@ class Bookflow {
         return $this->bookalope->http_post($this->url . "/files/document", $params);
     }
 
-    // Convert and download this bookflow's document. Note that downloading a
+    // Convert this bookflow's document. Note that downloading a
     // 'test' version shuffles the letters of random words, thus making the
     // document rather useless for anything but testing purposes.
     public function convert($format, $style, $version="test") {
+        if ($this->step !== "convert") {
+            throw new BookalopeError("Can't convert document, bookflow must be in 'convert' step");
+        }
+        // Check if a conversion already exists and is maybe available.
+        $conversion_key = $format . "-" . $style->short_name . "-" . $version;
+        if (array_key_exists($conversion_key, $this->conversions)) {
+            $conversion = $this->conversions[$conversion_key];
+            if ($conversion->status === "processing") {
+                // Conversion already in progress, do nothing.
+                return;
+            }
+            if ($conversion->status === "ok") {
+                // Conversion has finished and download is available, do nothing.
+                return;
+            }
+        }
+        // Initiate a new conversion on the server.
         $params = array(
             "format" => $format,
             "styling" => $style->short_name,
             "version" => $version,
             );
-        return $this->bookalope->http_get($this->url . "/convert", $params);
+        $conversion = $this->bookalope->http_post($this->url . "/convert", $params);
+        $this->conversions[$conversion_key] = $conversion;
+    }
+
+    // Return the status of the bookflow's file conversion for the specified
+    // format, style, and version.
+    public function convert_status($format, $style, $version="test") {
+        $conversion_key = $format . "-" . $style->short_name . "-" . $version;
+        if (array_key_exists($conversion_key, $this->conversions)) {
+            $conversion = $this->conversions[$conversion_key];
+            $conversion = $this->bookalope->http_get($this->url . "/download/" . $conversion->download_id . "/status");
+            return $conversion->status;
+        }
+        else {
+            return "na";
+        }
+    }
+
+    // Once the convert_status() function returns 'ok', the converted file can be
+    // downloaded and is returned by this function.
+    public function convert_download($format, $style, $version="test") {
+        $conversion_key = $format . "-" . $style->short_name . "-" . $version;
+        if (array_key_exists($conversion_key, $this->conversions)) {
+            $conversion = $this->conversions[$conversion_key];
+            return $this->bookalope->http_get($this->url . "/download/" . $conversion->download_id);
+        }
+        else {
+            throw new BookalopeError("Bookflow has not been converted yet to " . $format);
+        }
     }
 }
 

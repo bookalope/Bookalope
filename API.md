@@ -1,4 +1,4 @@
-<img src="https://bookalope.net/img/bookalope-logo.png" width="50%" alt="Bookalope Logo">
+<img src="https://bookalope.net/img/bookalope-logo-black.png" width="50%" alt="Bookalope Logo">
 
 # The Bookalope REST API
 
@@ -7,9 +7,9 @@
 - [Overview](#overview)
 - [User Profile](#user-profile)
   - [GET /api/profile](#get-profile)  
-  Return a user's profile information
+  Return a user’s profile information
   - [POST /api/profile](#post-profile)  
-  Modify a user's profile information
+  Modify a user’s profile information
 - [Books](#books)
   - [GET /api/books](#get-books)  
   Return a list of current books
@@ -34,7 +34,7 @@
   Delete the bookflow with id `id`
 - [Document and Image Handling](#document-and-image-handling)
   - [GET /api/bookflows/{id}/files/document](#get-bookflows-files-document)  
-  Return the bookflow's original document file, if it exists
+  Return the bookflow’s original document file, if it exists
   - [POST /api/bookflows/{id}/files/document](#post-bookflows-files-document)  
   Upload a document for analysis for the given bookflow with id `id`
   - [GET /api/bookflows/{id}/files/image](#get-bookflows-files-image)  
@@ -43,24 +43,28 @@
   Upload an image for the book of the bookflow with id `id`
 - [Scratchpad](#scratchpad)
   - [GET /api/bookflows/{id}/scratchpad](#get-scratchpad)  
-  Return the content of the bookflow's scratchpad
+  Return the content of the bookflow’s scratchpad
   - [POST /api/bookflows/{id}/scratchpad](#post-scratchpad)  
-  Add or update entries of the bookflow's scratchpad
+  Add or update entries of the bookflow’s scratchpad
   - [DELETE /api/bookflows/{id}/scratchpad](#delete-scratchpad)  
-  Clear the bookflow's scratchpad
+  Clear the bookflow’s scratchpad
 - [Conversion and Download](#conversion-and-download)
   - [GET /api/formats](#get-formats)  
   Return a list of all supported import and export file formats
   - [GET /api/styles](#get-styles)  
   Return styling information for all or a specific export file format
-  - [GET /api/bookflows/{id}/convert](#get-bookflows-convert)  
-  Convert and download the bookflow's document
+  - [POST /api/bookflows/{id}/convert](#post-bookflows-convert)  
+  Initiate the conversion of the bookflow’s document
+  - [GET /api/bookflows/{id}/download/{fid}/status](#get-bookflows-download-status)  
+  Check the status of the conversion of the bookflow’s document
+  - [POST /api/bookflows/{id}/download/{fid}](#get-bookflows-download)  
+  Donwload the bookflow’s converted document
 
 ## Overview
 
 [Bookalope](https://bookalope.net/) provides web services to the user through a [REST API](https://en.wikipedia.org/wiki/Representational_state_transfer). All resource URLs are based on `https://bookflow.bookalope.net/api` and require [basic authenticated client access](https://en.wikipedia.org/wiki/Basic_access_authentication) with each request.
 
-When a user logs into Bookalope through the website, a session and an API token are generated. This API token can be found on the user's profile page, and is used to authenticate the REST requests. The token is valid for as long as the user's account exists, and can be changed any time.
+When a user logs into Bookalope through the website, a session and an API token are generated. This API token can be found on the user’s profile page, and is used to authenticate the REST requests. The token is valid for as long as the user’s account exists, and can be changed any time.
 
 Since basic authentication requires a Base64 encoded username and password, the token is passed as the username and the password is empty, i.e.:
 
@@ -94,7 +98,7 @@ A user profile contains relevant information about the current (i.e. requesting)
 Get the current profile data.
 
 **Parameters**: n/a  
-**Return**: first and last name  
+**Return**: The first and last name.  
 **Errors**: n/a
 
     ~ > http --auth token: --verbose GET https://bookflow.bookalope.net/api/profile
@@ -308,7 +312,7 @@ Post to update the book name/title.
 
 <a name="delete-books-id"></a> `DELETE https://bookflow.bookalope.net/api/books/{book_id}`
 
-Delete the specified book. Note that deleting a book also deletes all of the book's bookflows.
+Delete the specified book. Note that deleting a book also deletes all of the book’s bookflows.
 
 **Parameters**: n/a  
 **Return**: n/a  
@@ -506,7 +510,7 @@ The original text document and images for a bookflow are handled similar to the 
 
 <a name="get-bookflows-files-document"></a>`GET https://bookflow.bookalope.net/api/bookflows/{id}/files/document`
 
-Get the bookflow's original document file, if it exists.
+Get the bookflow’s original document file, if it exists.
 
 **Parameter**: n/a  
 **Return**: The original text document for the bookflow.  
@@ -565,7 +569,7 @@ Post the original document file for the given bookflow; if the bookflow has alre
 
 <a name="get-bookflows-files-image"></a>`GET https://bookflow.bookalope.net/api/bookflows/{id}/files/image`
 
-Get the bookflow's cover image. If no cover image was provided yet, then one will be generated on the fly. This generated cover image is not stored for the bookflow.
+Get the bookflow’s cover image. If no cover image was provided yet, then one will be generated on the fly. This generated cover image is not stored for the bookflow.
 
 **Parameters**: `name` (string) is the name or identifier of the image; this parameter is optional and defaults to `'cover-image'`.  
 **Return**: The requested image.  
@@ -594,7 +598,7 @@ Get the bookflow's cover image. If no cover image was provided yet, then one wil
 
 Post an image with the given name or id for the bookflow. The only image currently supported is the cover image.
 
-**Parameters**: `name` (string) is the name or identifier for the image; this parameter is optional and defaults to `'cover-image'`, the book's cover image. `caption` (string) is the caption for the image; this parameter is optional and if none is given then an existing caption for the image is removed. `file` (string) is the base64 encoded image. `filename` (string) is the original file name of the image.  
+**Parameters**: `name` (string) is the name or identifier for the image; this parameter is optional and defaults to `'cover-image'`, the book’s cover image. `caption` (string) is the caption for the image; this parameter is optional and if none is given then an existing caption for the image is removed. `file` (string) is the base64 encoded image. `filename` (string) is the original file name of the image.  
 **Return**: n/a  
 **Errors**: `400` if the image is not one of the supported formats (jpg, png, gif); `406` if the bookflow does not contain a document, or the document is not in `convert` step, or no image with the specified name existed; `413` if the posted document is too large (more than 12MB).  
 
@@ -628,10 +632,10 @@ Every bookflow has its private scratchpad; a scratchpad is a dictionary of key-v
 
 <a name="get-scratchpad"></a>`GET https://bookflow.bookalope.net/api/bookflows/{id}/scratchpad`
 
-Get the current content of a bookflow's scratchpad.
+Get the current content of a bookflow’s scratchpad.
 
 **Parameters**: n/a  
-**Return**: the scratchpad dictionary  
+**Return**: The scratchpad dictionary.  
 **Errors**: n/a  
 
     ~ > http --json --auth token: --verbose GET http://localhost:6543/api/bookflows/36582d54166540638efc286e655fb657/scratchpad
@@ -656,7 +660,7 @@ Get the current content of a bookflow's scratchpad.
 
 <a name="post-scratchpad"></a>`POST https://bookflow.bookalope.net/api/bookflows/{id}/scratchpad`
 
-Post, i.e. add or update entries of a bookflow's scratchpad. If they `key` does not yet exist, add the key-value pair; if the `key` already exists, update the value only.
+Post, i.e. add or update entries of a bookflow’s scratchpad. If they `key` does not yet exist, add the key-value pair; if the `key` already exists, update the value only.
 
 **Parameters**: A dictionary of key-value pairs, both keys and values must be strings no longer than 128 characters long.  
 **Return**: n/a  
@@ -687,7 +691,7 @@ Post, i.e. add or update entries of a bookflow's scratchpad. If they `key` does 
 
 <a name="delete-scratchpad"></a>`DELETE https://bookflow.bookalope.net/api/bookflows/{id}/scratchpad`
 
-Delete and clear the content of a bookflow's scratchpad. Note that Bookalope executes this function with every `step` transition of a bookflow.
+Delete and clear the content of a bookflow’s scratchpad. Note that Bookalope executes this function with every `step` transition of a bookflow.
 
 **Parameters**: n/a  
 **Return**: n/a  
@@ -716,7 +720,9 @@ Delete and clear the content of a bookflow's scratchpad. Note that Bookalope exe
 
 Get two lists of supported import and export file formats that Bookalope supports. Both import and export lists contain two-element dictionaries, where the `mime` key holds the mime type of the file format and the `exts` key holds a list of file name extensions for the file format.
 
-**Parameters**: n/a
+**Parameters**: n/a  
+**Return**: A dictionary for import and export formats and their descriptions; here, a description includes the file format’s filename extension and its MIME type.  
+**Errors**: n/a  
 
     ~ > http --auth token: --verbose GET https://bookflow.bookalope.net/api/formats
     GET /api/formats HTTP/1.1
@@ -781,7 +787,9 @@ Get two lists of supported import and export file formats that Bookalope support
 
 Get information about the available visual styles for one or for all target book formats.
 
-**Parameters**: The `format` (string) parameter is optional and specifies the target book file format for which style information is retrieved; if none is given style information is retrieved for *all* supported formats.
+**Parameters**: The `format` (string) parameter is optional and specifies the target book file format for which style information is retrieved; if none is given style information is retrieved for *all* supported formats.  
+**Return**: A dictionary of formats mapping to a list of styles and their description.  
+**Errors**: n/a  
 
     ~ > http --auth token: --verbose GET https://bookflow.bookalope.net/api/styles format==epub
     GET /api/styles?format=epub HTTP/1.1
@@ -798,7 +806,7 @@ Get information about the available visual styles for one or for all target book
     Content-Length: 158
     Content-Type: application/json; charset=UTF-8
     Date: Wed, 14 Oct 2015 18:18:07 GMT
-    Server: waitress
+    Server: nginx/1.9.7
     
     {
         "name": "epub",
@@ -814,30 +822,99 @@ Get information about the available visual styles for one or for all target book
         ]
     }
 
-<a name="get-bookflows-convert"></a>`GET https://bookflow.bookalope.net/api/bookflows/{id}/convert`
+<a name="post-bookflows-convert"></a>`POST https://bookflow.bookalope.net/api/bookflows/{id}/convert`
 
-Convert and download the document into a target format and styling.
+Initiate the conversion of the bookflow’s document into a target format and styling.
 
 **Parameters**: The `format` (string) parameter determines which target format the book is to be converted into. The `format` is any of the export file name extensions returned by the `api/formats` call (i.e. `epub`, `epub3`, `mobi`, `pdf`, `icml`, or `docx`). The `styling` (string) parameter is optional and selects the style for the generated book; defaults to `default` which also is the only supported value at the moment. The `version` (string) parameter is optional and determines whether Bookalope generates a `test` or `final` version of the book; defaults to `test`.  
-**Return**: The converted document.  
+**Return**: A handle, URL, and current processing status of the converted document.  
 **Errors**: `406` if the bookflow step is anything other than `convert`. `409` if `version=final` and the user has no billing information or if the server explicitly disallows only `final`. `500` if a credit card charge failed.
 
-    ~ > http --auth token: --verbose --download GET https://bookflow.bookalope.net/api/bookflows/36582d54166540638efc286e655fb657/convert format==epub
-    GET /api/bookflows/36582d54166540638efc286e655fb657/convert?format=epub HTTP/1.1
-    Accept: application/json
+    ~ > http --auth token: --verbose POST https://bookflow.bookalope.net/api/bookflows/d441bf24d81b4f7a849fc77359f6d775/convert format=epub
+    POST /api/bookflows/d441bf24d81b4f7a849fc77359f6d775/convert HTTP/1.1
+    Accept: application/json, */*
+    Accept-Encoding: gzip, deflate
     Authorization: Basic token
     Connection: keep-alive
-    Content-Length: 18
+    Content-Length: 0
     Content-Type: application/json
     Host: bookflow.bookalope.net
-    User-Agent: HTTPie/0.9.2
-    
+    User-Agent: HTTPie/0.9.8
+
+    {
+        "format": "epub"
+    }
+
     HTTP/1.1 200 OK
-    Content-Disposition: attachment; filename="36582d54166540638efc286e655fb657.epub"
-    Content-Length: 22286
-    Content-Type: application/epub+zip; charset=UTF-8
-    Date: Fri, 18 Sep 2015 22:56:24 GMT
-    Server: nginx/1.9.4
-    
-    Downloading 21.76 kB to "36582d54166540638efc286e655fb657.epub"
-    Done. 21.76 kB in 0.00037s (57.44 MB/s)
+    Content-Length: 180
+    Content-Type: application/json
+    Date: Fri, 25 May 2018 05:20:41 GMT
+    Server: nginx/1.9.7
+    X-Content-Type-Options: nosniff
+
+    {
+        "download_id": "211fc053a02d487cbb412c25fc7f8501",
+        "download_url": "https://bookflow.bookalope.net/bookflows/d441bf24d81b4f7a849fc77359f6d775/download/211fc053a02d487cbb412c25fc7f8501",
+        "status": "processing"
+    }
+
+<a name="get-bookflows-download-status"></a>`GET https://bookflow.bookalope.net/bookflows/{id}/download/{fid}/status`
+
+Get the current status of the converted document. Valid status values are `'processing'` (the document is currently converting), `'ok'` (the document has been converted successfully and is ready for download), `'failed'` (the document failed to convert and can not be downloaded), and `'na'` (no conversion is available, and needs to be triggered by calling the `/convert` endpoint).
+
+Note that the URL is the same as returned by the `/convert` endpoint!
+
+**Parameters:** n/a  
+**Return:** Information about the document’s processing status.  
+**Errors:** n/a
+
+    ~ > http --auth token: --verbose GET https://bookflow.bookalope.net/bookflows/d441bf24d81b4f7a849fc77359f6d775/download/211fc053a02d487cbb412c25fc7f8501/status
+    GET /bookflows/d441bf24d81b4f7a849fc77359f6d775/download/211fc053a02d487cbb412c25fc7f8501/status HTTP/1.1
+    Accept: application/json, */*
+    Accept-Encoding: gzip, deflate
+    Authorization: Basic token
+    Connection: keep-alive
+    Content-Type: application/json
+    Host: bookflow.bookalope.net
+    User-Agent: HTTPie/0.9.8
+
+    HTTP/1.1 200 OK
+    Content-Length: 67
+    Content-Type: application/json
+    Date: Fri, 25 May 2018 05:21:11 GMT
+    Server: nginx/1.9.7
+    X-Content-Type-Options: nosniff
+
+    {
+        "download_id": "211fc053a02d487cbb412c25fc7f8501",
+        "status": "ok"
+    }
+
+<a name="get-bookflows-download"></a>`GET https://bookflow.bookalope.net/bookflows/{id}/download/{fid}`
+
+Download the specified converted document.
+
+**Parameters:** n/a  
+**Return:** The converted document attachment to the response.  
+**Errors:** `400` if the status of the conversion is anything else but `'ok'`.
+
+    ~ > http --auth token: --verbose --download GET https://bookflow.bookalope.net/bookflows/d441bf24d81b4f7a849fc77359f6d775/download/211fc053a02d487cbb412c25fc7f8501
+    GET /bookflows/d441bf24d81b4f7a849fc77359f6d775/download/211fc053a02d487cbb412c25fc7f8501 HTTP/1.1
+    Accept: application/json, */*
+    Accept-Encoding: identity
+    Authorization: Basic token
+    Connection: keep-alive
+    Content-Type: application/json
+    Host: bookflow.bookalope.net
+    User-Agent: HTTPie/0.9.8
+
+    HTTP/1.1 200 OK
+    Content-Disposition: attachment; filename="d441bf24d81b4f7a849fc77359f6d775.epub"
+    Content-Length: 15980
+    Content-Type: application/epub+zip
+    Date: Fri, 25 May 2018 06:00:23 GMT
+    Server: nginx/1.9.7
+    X-Content-Type-Options: nosniff
+
+    Downloading 15.61 kB to "d441bf24d81b4f7a849fc77359f6d775.epub"
+    Done. 15.61 kB in 0.00051s (29.65 MB/s)

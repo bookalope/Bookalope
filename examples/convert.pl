@@ -161,7 +161,7 @@ write_file($bookflow_id . '.pdf', convert_and_download($api_bookflows, 'pdf'));
 write_file($bookflow_id . '.icml', convert_and_download($api_bookflows, 'icml'));
 write_file($bookflow_id . '.docx', convert_and_download($api_bookflows, 'docx'));
 write_file($bookflow_id . '.xml', convert_and_download($api_bookflows, 'docbook'));
-write_file($bookflow_id . 'html.', convert_and_download($api_bookflows, 'htmlbook'));
+write_file($bookflow_id . '.html', convert_and_download($api_bookflows, 'htmlbook'));
 
 # Delete the book and all of its data.
 delete_request("$api/books/$book_id");

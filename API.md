@@ -539,7 +539,7 @@ Get the bookflow’s original document file, if it exists.
 
 Post the original document file for the given bookflow; if the bookflow has already a document file, then this call fails. This causes the Bookalope server to analyze the document and to extract content from it based on built-in heuristics. The interactive *Import* and *Content* steps from the website are incorporated here, and the bookflow moves forward to the *Convert* step automatically as if the user clicked *Next* on the website.
 
-**Parameters**: `file` (string) is a base64 encoded text document. `filename` (string) is the original file name of the text document.`filetype` (string) must be one of `doc` or `gutenberg`, describing how the document file is to be interpreted by Bookalope.  
+**Parameters**: `file` (string) is a base64 encoded text document. `filename` (string) is the original file name of the text document. `filetype` (string) must be one of `doc`, `epub`, or `gutenberg`, describing how the document file is to be interpreted by Bookalope.  `ignore_analysis` (boolean) must be either `true` or `false` indicating whether Bookalope should ignore the results of structure and content analysis and produce a flat & semantically unstructured document (reusing the document’s original styling), or if the document should be structured properly (defaults to `false`) based on Bookalope’s semantic structure classification.  
 **Return**: n/a  
 **Error**: `406` if the bookflow already contains a document or if the file type is unsupported, `413` if the posted document is too large (more than 12MB).
 

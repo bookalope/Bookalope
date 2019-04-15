@@ -103,6 +103,7 @@ if [ `builtin type -p http` ]; then
         esac
     done
     http --download --auth $TOKEN: GET $DOWNLOAD_URL > /dev/tty
+    mv $BOOKFLOWID.epub "${EBOOKFILE%.*}-$BOOKFLOWID.epub"
     echo "Done"
 
     # Delete the book and its bookflow.
@@ -178,6 +179,7 @@ else
             esac
         done
         curl --user $TOKEN: --remote-name --remote-header-name --request GET $DOWNLOAD_URL > /dev/tty
+        mv $BOOKFLOWID.epub "${EBOOKFILE%.*}-$BOOKFLOWID.epub"
         echo "Done"
 
         # Delete the book and its bookflow.

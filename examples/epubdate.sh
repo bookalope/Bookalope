@@ -49,15 +49,10 @@ if [ `builtin type -p http` ]; then
         exit 1
     fi
 
-    # Create a new book.
+    # Create a new book, and use the book's initial bookflow.
     echo "Creating new Book..."
-    BOOKID=`http --json --print=b --auth $TOKEN: POST $APIHOST/api/books name="$EBOOKBASE" | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['book']['id']);"`
-    echo "Done, id=$BOOKID"
-
-    # Create a new bookflow "Bookflow 1" for the book.
-    echo "Creating new Bookflow..."
-    BOOKFLOWID=`http --json --print=b --auth $TOKEN: POST $APIHOST/api/books/$BOOKID/bookflows name="Bookflow 1" title="$EBOOKBASE" | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['bookflow']['id']);"`
-    echo "Done, id=$BOOKFLOWID"
+    read -r BOOKID BOOKFLOWID <<< `http --json --print=b --auth $TOKEN: POST $APIHOST/api/books name="$EBOOKBASE" | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['book']['id'], obj['book']['bookflows'][0]['id']);"`
+    echo "Done, book=$BOOKID, bookflow=$BOOKFLOWID"
 
     # Upload the ebook file which automatically ingests its content and styling. Passing the `ignore_analysis`
     # argument here tells Bookalope to ignore the AI-assisted semantic structuring of the ebook, and instead
@@ -122,15 +117,10 @@ else
             exit 1
         fi
 
-        # Create a new book.
+        # Create a new book, and use the book's initial bookflow.
         echo "Creating new Book..."
-        BOOKID=`curl --user $TOKEN: --header "Content-Type: application/json" --data '{"name":"'$EBOOKBASE'"}' --request POST $APIHOST/api/books | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['book']['id']);"`
-        echo "Done, id=$BOOKID"
-
-        # Create a new bookflow "Bookflow 1" for the book.
-        echo "Creating new Bookflow..."
-        BOOKFLOWID=`curl --user $TOKEN: --header "Content-Type: application/json" --data '{"name":"Bookflow 1", "title":"'$EBOOKBASE'"}' --request POST $APIHOST/api/books/$BOOKID/bookflows | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['bookflow']['id']);"`
-        echo "Done, id=$BOOKFLOWID"
+        read -r BOOKID BOOKFLOWID <<< `curl --user $TOKEN: --header "Content-Type: application/json" --data '{"name":"'$EBOOKBASE'"}' --request POST $APIHOST/api/books | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['book']['id'], obj['book']['bookflows'][0]['id']);"`
+        echo "Done, book=$BOOKID, bookflow=$BOOKFLOWID"
 
         # Upload the ebook file which automatically ingests its content and styling. Passing the `ignore_analysis`
         # argument here tells Bookalope to ignore the AI-assisted semantic structuring of the ebook, and instead

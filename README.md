@@ -18,21 +18,21 @@ This workflow is not one-directional; instead, the user can move seamlessly fort
 
 Bookalope can be used through a visual website interface or by invoking functions of its REST web API.
 
-### Interactive web site
+## Interactive web site
 
 All of the Bookalope tools can be accessed with a web browser through [https://bookflow.bookalope.net](https://bookflow.bookalope.net). Please visit our [Youtube Channel](https://www.youtube.com/channel/UCCxR_k6G06qEAj3IjZ9AcoQ) to learn more about using the website, and how to convert a book using Bookalope.
 
-### The REST API
+## The REST API
 
 Bookalope exposes its tools increasingly through a REST API that is documented
 [here](https://github.com/jenstroeger/Bookalope/blob/master/API.md). The example scripts in the `examples` folder illustrate the use of the Bookalope API directly
 from a CLI or by using a simple object-oriented wrapper in Python.
 
-### CLI
+## CLI
 
 The REST API can be accessed directly through command-line tools like [curl](http://curl.haxx.se/), [httpie](http://httpie.org/), or any other tool that allows to send HTTP requests to a server. Please refer to the [API documentation](https://github.com/jenstroeger/Bookalope/blob/master/API.md) for more examples that illustrate how to invoke Bookalope’s API functions directly, or to the example script [here](https://github.com/jenstroeger/Bookalope/blob/master/examples/convert.sh).
 
-### Object Model for Language Integration
+## Object Model for Language Integration
 
 To make the use of the REST API more comfortable, language specific wrappers provide a simple object-oriented model. This object model defines the following classes:
 

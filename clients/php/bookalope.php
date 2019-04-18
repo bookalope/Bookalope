@@ -496,11 +496,11 @@ class Bookflow {
     // and automatically extract the content and structure of the document using
     // Bookalope's default heuristics. Once this call returns, the document is
     // ready for conversion.
-    public function set_document($filename, $filebytes) {
+    public function set_document($filename, $filebytes, $filetype="doc") {
         // TODO: Check that bytes are not of an unsupported format.
         $params = array(
             "filename" => $filename,
-            "filetype" => "doc",
+            "filetype" => $filetype,
             "file" => base64_encode($filebytes),
             );
         return $this->bookalope->http_post($this->url . "/files/document", $params);

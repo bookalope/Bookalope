@@ -910,7 +910,7 @@ class Bookflow(object):
         """
         return self.__bookalope.http_get(self.url + "/files/document")
 
-    def set_document(self, document_filename, document_bytes):
+    def set_document(self, document_filename, document_bytes, document_type="doc"):
         """
         Upload a document for this bookflow. This will start the style analysis,
         and automatically extract the content and structure of the document using
@@ -925,7 +925,7 @@ class Bookflow(object):
             raise BookflowError("Unable to set document because one is already set")
         # TODO: Check that bytes are not of an unsupported format.
         params = {
-            "filetype": "doc",
+            "filetype": document_type,
             "filename": document_filename,
             "file": base64.b64encode(document_bytes).decode(),
             }

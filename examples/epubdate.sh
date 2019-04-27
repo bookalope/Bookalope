@@ -75,7 +75,7 @@ if [ `builtin type -p http` ]; then
 
     # Wait until the bookflow's step changes from 'processing' to 'convert', thus indicating that Bookalope
     # has finished noodling through the ebook.
-    while [ 1 ]; do
+    while true; do
         wait 5
         STEP=`http --json --print=b --auth $TOKEN: GET $APIHOST/api/bookflows/$BOOKFLOWID | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['bookflow']['step']);"`
         if [ "$STEP" = "convert" ]; then
@@ -92,7 +92,7 @@ if [ `builtin type -p http` ]; then
     # Regarding < /dev/tty see: https://github.com/jakubroztocil/httpie/issues/150#issuecomment-21419373
     echo "Converting and downloading EPUB3 format..."
     DOWNLOAD_URL=`http --auth $TOKEN: POST $APIHOST/api/bookflows/$BOOKFLOWID/convert format=epub3 version=final < /dev/tty | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['download_url'])"`
-    while [ 1 ]; do
+    while true; do
         wait 5
         STATUS=`http --auth $TOKEN: GET $DOWNLOAD_URL/status < /dev/tty | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['status']);"`
         case "$STATUS" in
@@ -146,7 +146,7 @@ else
 
         # Wait until the bookflow's step changes from 'processing' to 'convert', thus indicating that Bookalope
         # has finished noodling through the ebook.
-        while [ 1 ]; do
+        while true; do
             wait 5
             STEP=`curl --user $TOKEN: --header "Content-Type: application/json" --request GET $APIHOST/api/bookflows/$BOOKFLOWID | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['bookflow']['step']);"`
             if [ "$STEP" = "convert" ]; then
@@ -163,7 +163,7 @@ else
         # Regarding < /dev/tty see: https://github.com/jakubroztocil/httpie/issues/150#issuecomment-21419373
         echo "Converting and downloading books..."
         DOWNLOAD_URL=`curl --user $TOKEN: --header "Content-Type: application/json" --data '{"format":"epub3", "version":"final"}' --request POST $APIHOST/api/bookflows/$BOOKFLOWID/convert < /dev/tty | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['download_url'])"`
-        while [ 1 ]; do
+        while true; do
             wait 5
             STATUS=`curl --user $TOKEN: --header "Content-Type: application/json" --request GET $DOWNLOAD_URL/status < /dev/tty | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['status']);"`
             case "$STATUS" in

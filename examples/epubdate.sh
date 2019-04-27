@@ -45,7 +45,7 @@ function wait() {
     local COUNT=$1
     while ((COUNT--)); do
         for SPIN in '-' '\' '|' '/'; do
-            echo -en "Waiting for bookflow to finish $SPIN \r"
+            echo -en "Waiting for Bookflow to finish $SPIN \r"
             sleep 0.25
         done
     done
@@ -62,8 +62,8 @@ if [ `builtin type -p http` ]; then
 
     # Create a new book, and use the book's initial bookflow.
     echo "Creating new Book..."
-    read -r BOOKID BOOKFLOWID <<< `http --json --print=b --auth $TOKEN: POST $APIHOST/api/books name="$EBOOKBASE" | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['book']['id'], obj['book']['bookflows'][0]['id']);"`
-    echo "Done, book=$BOOKID, bookflow=$BOOKFLOWID"
+    read -r BOOKID BOOKFLOWID <<< `http --ignore-stdin --json --print=b --auth $TOKEN: POST $APIHOST/api/books name="$EBOOKBASE" | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['book']['id'], obj['book']['bookflows'][0]['id']);"`
+    echo "Done, Book id=$BOOKID, Bookflow id=$BOOKFLOWID"
 
     # Upload the ebook file which automatically ingests its content and styling. Passing the `ignore_analysis`
     # argument here tells Bookalope to ignore the AI-assisted semantic structuring of the ebook, and instead
@@ -71,14 +71,15 @@ if [ `builtin type -p http` ]; then
     # ebook, but it is at least a valid EPUB3 file. So make sure you know what you're doing here.
     echo "Uploading and ingesting ebook file: $EBOOKNAME"
     base64 "$EBOOKFILE" > "$TMPDIR/$EBOOKNAME.base64"
-    http --json --auth $TOKEN: POST $APIHOST/api/bookflows/$BOOKFLOWID/files/document file=@"$TMPDIR/$EBOOKNAME.base64" filename="$EBOOKNAME" filetype=epub ignore_analysis=true
+    http --ignore-stdin --json --print= --auth $TOKEN: POST $APIHOST/api/bookflows/$BOOKFLOWID/files/document file=@"$TMPDIR/$EBOOKNAME.base64" filename="$EBOOKNAME" filetype=epub ignore_analysis=true
 
     # Wait until the bookflow's step changes from 'processing' to 'convert', thus indicating that Bookalope
     # has finished noodling through the ebook.
     while true; do
         wait 5
-        STEP=`http --json --print=b --auth $TOKEN: GET $APIHOST/api/bookflows/$BOOKFLOWID | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['bookflow']['step']);"`
+        STEP=`http --ignore-stdin --json --print=b --auth $TOKEN: GET $APIHOST/api/bookflows/$BOOKFLOWID | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['bookflow']['step']);"`
         if [ "$STEP" = "convert" ]; then
+            echo "Waiting for Bookflow to finish, done!"
             break
         fi
         if [ "$STEP" = "processing_failed" ]; then
@@ -86,11 +87,10 @@ if [ `builtin type -p http` ]; then
             exit 1
         fi
     done
-    echo "Waiting for bookflow to finish, done!"
 
     # Convert the ingested ebook file to EPUB3 and download it.
     # Regarding < /dev/tty see: https://github.com/jakubroztocil/httpie/issues/150#issuecomment-21419373
-    echo "Converting and downloading EPUB3 format..."
+    echo "Converting to EPUB3 format and downloading ebook file..."
     DOWNLOAD_URL=`http --auth $TOKEN: POST $APIHOST/api/bookflows/$BOOKFLOWID/convert format=epub3 version=final < /dev/tty | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['download_url'])"`
     while true; do
         wait 5
@@ -103,18 +103,18 @@ if [ `builtin type -p http` ]; then
             exit 1
             ;;
         "ok")
-            echo "Waiting for bookflow to finish, done!"
+            echo "Waiting for Bookflow to finish, done!"
             break
             ;;
         esac
     done
-    http --download --auth $TOKEN: GET $DOWNLOAD_URL > /dev/tty
+    http --download --ignore-stdin --print= --auth $TOKEN: GET $DOWNLOAD_URL > /dev/tty
     mv $BOOKFLOWID.epub "${EBOOKFILE%.*}-$BOOKFLOWID.epub"
     echo "Saved converted ebook to file ${EBOOKFILE%.*}-$BOOKFLOWID.epub"
 
     # Delete the book and its bookflow.
-    echo "Deleting book and bookflows..."
-    http --auth $TOKEN: DELETE $APIHOST/api/books/$BOOKID
+    echo "Deleting Book and Bookflow..."
+    http --ignore-stdin --print= --auth $TOKEN: DELETE $APIHOST/api/books/$BOOKID
     echo "Done"
 
 else
@@ -123,32 +123,33 @@ else
     if [ `builtin type -p curl` ]; then
 
         # Check that the Bookalope token authenticates correctly with the server.
-        if [ ! `curl --user $TOKEN: --request GET -s -D - -o /dev/null $APIHOST/api/profile | grep HTTP | cut -d ' ' -f 2` == "200" ]; then
+        if [ ! `curl --silent --show-error --user $TOKEN: --request GET -s -D - -o /dev/null $APIHOST/api/profile | grep HTTP | cut -d ' ' -f 2` == "200" ]; then
             echo "Wrong Bookalope API token, exiting"
             exit 1
         fi
 
         # Create a new book, and use the book's initial bookflow.
         echo "Creating new Book..."
-        read -r BOOKID BOOKFLOWID <<< `curl --user $TOKEN: --header "Content-Type: application/json" --data '{"name":"'$EBOOKBASE'"}' --request POST $APIHOST/api/books | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['book']['id'], obj['book']['bookflows'][0]['id']);"`
-        echo "Done, book=$BOOKID, bookflow=$BOOKFLOWID"
+        read -r BOOKID BOOKFLOWID <<< `curl --silent --show-error --user $TOKEN: --header "Content-Type: application/json" --data '{"name":"'$EBOOKBASE'"}' --request POST $APIHOST/api/books | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['book']['id'], obj['book']['bookflows'][0]['id']);"`
+        echo "Done, Book id=$BOOKID, Bookflow id=$BOOKFLOWID"
 
         # Upload the ebook file which automatically ingests its content and styling. Passing the `ignore_analysis`
         # argument here tells Bookalope to ignore the AI-assisted semantic structuring of the ebook, and instead
         # carry through the ebook's visual styles (AKA WYSIWYG conversion). The result is a flat and unstructured
         # ebook, but it is at least a valid EPUB3 file. So make sure you know what you're doing here.
-        echo "Uploading and ingesting ebook: $EBOOKNAME"
+        echo "Uploading and ingesting ebook file: $EBOOKNAME"
         echo '{"filetype":"epub", "filename":"'$EBOOKNAME'", "ignore_analysis":"true", "file":"' > "$TMPDIR/$EBOOKNAME.json"
         base64 "$EBOOKFILE" >> "$TMPDIR/$EBOOKNAME.json"
         echo '"}' >> "$TMPDIR/$EBOOKNAME.json"
-        curl --user $TOKEN: --header "Content-Type: application/json" --data @"$TMPDIR/$EBOOKNAME.json" --request POST $APIHOST/api/bookflows/$BOOKFLOWID/files/document
+        curl --silent --show-error --user $TOKEN: --header "Content-Type: application/json" --data @"$TMPDIR/$EBOOKNAME.json" --request POST $APIHOST/api/bookflows/$BOOKFLOWID/files/document
 
         # Wait until the bookflow's step changes from 'processing' to 'convert', thus indicating that Bookalope
         # has finished noodling through the ebook.
         while true; do
             wait 5
-            STEP=`curl --user $TOKEN: --header "Content-Type: application/json" --request GET $APIHOST/api/bookflows/$BOOKFLOWID | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['bookflow']['step']);"`
+            STEP=`curl --silent --show-error --user $TOKEN: --header "Content-Type: application/json" --request GET $APIHOST/api/bookflows/$BOOKFLOWID | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['bookflow']['step']);"`
             if [ "$STEP" = "convert" ]; then
+                echo "Waiting for Bookflow to finish, done!"
                 break
             fi
             if [ "$STEP" = "processing_failed" ]; then
@@ -156,15 +157,14 @@ else
                 exit 1
             fi
         done
-        echo "Waiting for bookflow to finish, done!"
 
         # Convert the ingested ebook file to EPUB3 and download it.
         # Regarding < /dev/tty see: https://github.com/jakubroztocil/httpie/issues/150#issuecomment-21419373
-        echo "Converting and downloading books..."
-        DOWNLOAD_URL=`curl --user $TOKEN: --header "Content-Type: application/json" --data '{"format":"epub3", "version":"final"}' --request POST $APIHOST/api/bookflows/$BOOKFLOWID/convert < /dev/tty | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['download_url'])"`
+        echo "Converting to EPUB3 format and downloading ebook file..."
+        DOWNLOAD_URL=`curl --silent --show-error --user $TOKEN: --header "Content-Type: application/json" --data '{"format":"epub3", "version":"final"}' --request POST $APIHOST/api/bookflows/$BOOKFLOWID/convert < /dev/tty | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['download_url'])"`
         while true; do
             wait 5
-            STATUS=`curl --user $TOKEN: --header "Content-Type: application/json" --request GET $DOWNLOAD_URL/status < /dev/tty | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['status']);"`
+            STATUS=`curl --silent --show-error --user $TOKEN: --header "Content-Type: application/json" --request GET $DOWNLOAD_URL/status < /dev/tty | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['status']);"`
             case "$STATUS" in
             "processing")
                 ;;
@@ -173,18 +173,18 @@ else
                 exit 1
                 ;;
             "ok")
-                echo "Waiting for bookflow to finish, done!"
+                echo "Waiting for Bookflow to finish, done!"
                 break
                 ;;
             esac
         done
-        curl --user $TOKEN: --remote-name --remote-header-name --request GET $DOWNLOAD_URL > /dev/tty
+        curl --silent --show-error --user $TOKEN: --remote-name --remote-header-name --request GET $DOWNLOAD_URL > /dev/tty
         mv $BOOKFLOWID.epub "${EBOOKFILE%.*}-$BOOKFLOWID.epub"
         echo "Saved converted ebook to file ${EBOOKFILE%.*}-$BOOKFLOWID.epub"
 
         # Delete the book and its bookflow.
-        echo "Deleting book and bookflows..."
-        curl --user $TOKEN: --request DELETE $APIHOST/api/books/$BOOKID
+        echo "Deleting Book and Bookflow..."
+        curl --silent --show-error --user $TOKEN: --request DELETE $APIHOST/api/books/$BOOKID
         echo "Done"
 
     else

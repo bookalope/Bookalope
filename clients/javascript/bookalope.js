@@ -1,3 +1,7 @@
+/*
+ * This file is cloned from https://github.com/jenstroeger/Bookalope/blob/master/clients/javascript/bookalope.js
+ */
+
 
 /**
  * Helper function that checks if a given string is a Bookalope token or ID;

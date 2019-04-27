@@ -69,7 +69,7 @@ if [ `builtin type -p http` ]; then
     # argument here tells Bookalope to ignore the AI-assisted semantic structuring of the ebook, and instead
     # carry through the ebook's visual styles (AKA WYSIWYG conversion). The result is a flat and unstructured
     # ebook, but it is at least a valid EPUB3 file. So make sure you know what you're doing here.
-    echo "Uploading and ingesting ebook..."
+    echo "Uploading and ingesting ebook file: $EBOOKNAME"
     base64 "$EBOOKFILE" > "$TMPDIR/$EBOOKNAME.base64"
     http --json --auth $TOKEN: POST $APIHOST/api/bookflows/$BOOKFLOWID/files/document file=@"$TMPDIR/$EBOOKNAME.base64" filename="$EBOOKNAME" filetype=epub ignore_analysis=true
 
@@ -110,7 +110,7 @@ if [ `builtin type -p http` ]; then
     done
     http --download --auth $TOKEN: GET $DOWNLOAD_URL > /dev/tty
     mv $BOOKFLOWID.epub "${EBOOKFILE%.*}-$BOOKFLOWID.epub"
-    echo "Done"
+    echo "Saved converted ebook to file ${EBOOKFILE%.*}-$BOOKFLOWID.epub"
 
     # Delete the book and its bookflow.
     echo "Deleting book and bookflows..."
@@ -137,12 +137,11 @@ else
         # argument here tells Bookalope to ignore the AI-assisted semantic structuring of the ebook, and instead
         # carry through the ebook's visual styles (AKA WYSIWYG conversion). The result is a flat and unstructured
         # ebook, but it is at least a valid EPUB3 file. So make sure you know what you're doing here.
-        echo "Uploading and ingesting ebook..."
+        echo "Uploading and ingesting ebook: $EBOOKNAME"
         echo '{"filetype":"epub", "filename":"'$EBOOKNAME'", "ignore_analysis":"true", "file":"' > "$TMPDIR/$EBOOKNAME.json"
         base64 "$EBOOKFILE" >> "$TMPDIR/$EBOOKNAME.json"
         echo '"}' >> "$TMPDIR/$EBOOKNAME.json"
         curl --user $TOKEN: --header "Content-Type: application/json" --data @"$TMPDIR/$EBOOKNAME.json" --request POST $APIHOST/api/bookflows/$BOOKFLOWID/files/document
-        echo "Done"
 
         # Wait until the bookflow's step changes from 'processing' to 'convert', thus indicating that Bookalope
         # has finished noodling through the ebook.
@@ -181,7 +180,7 @@ else
         done
         curl --user $TOKEN: --remote-name --remote-header-name --request GET $DOWNLOAD_URL > /dev/tty
         mv $BOOKFLOWID.epub "${EBOOKFILE%.*}-$BOOKFLOWID.epub"
-        echo "Done"
+        echo "Saved converted ebook to file ${EBOOKFILE%.*}-$BOOKFLOWID.epub"
 
         # Delete the book and its bookflow.
         echo "Deleting book and bookflows..."

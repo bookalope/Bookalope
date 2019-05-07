@@ -1,17 +1,76 @@
 #!/usr/bin/env bash
 #
-# TODO - Add --verbose or --silent option.
-#      - Pass a directory of ebook files, and use `parallel` (if installed) to process batches.
-#      - Add --server option to pick beta or production server.
+# Upgrade and/or fix an EPUB file using the Bookalope cloud service. Read the code for details 🤓
 
+# Talk to the production server by default, or use -b/--beta to switch servers.
+APIHOST="https://bookflow.bookalope.net"
+
+# Parse the options and arguments of this script.
+OPTIONS=`getopt --options hbt:a:i:p: --longoptions help,beta,title:,author:,isbn:,publisher: -- "$@"`
+if [ $? != 0 ] ; then
+    echo -e "Error parsing command line options, exiting"
+    exit 1
+fi
+eval set -- "$OPTIONS"
+while true; do
+    case "$1" in
+    -h | --help)
+        echo "Usage: $0 [OPTIONS] token epub"
+        echo -e "Upgrade and/or fix an EPUB file using the Bookalope cloud service.\n"
+        echo "Options are:"
+        echo "  -h, --help           Print this help and exit."
+        echo "  -b, --beta           Use Bookalope's Beta server instead of the production server."
+        echo "  -t, --title title    Set the ebook's metadata: title."
+        echo "  -a, --author author  Set the ebook's metadata: author."
+        echo "  -i, --isbn isbn      Set the ebook's metadata: ISBN number."
+        echo "  -p, --publisher pub  Set the ebook's metadata: publisher."
+        echo -e "\nNote that the metadata of the original EPUB file overrides the command line options."
+        exit 0
+        ;;
+    -b | --beta)
+        APIHOST="https://beta.bookalope.net"
+        shift
+        ;;
+    -t | --title)
+        METATITLE="$2"
+        shift 2
+        ;;
+    -a | --author)
+        METAAUTHOR="$2"
+        shift 2
+        ;;
+    -i | --isbn)
+        METAISBN="$2"
+        shift 2
+        ;;
+    -p | --publisher)
+        METAPUBLISHER="$2"
+        shift 2
+        ;;
+    --)
+        shift
+        break
+        ;;
+    *)
+        echo -e "Error parsing command line options, exiting"
+        exit 1
+        ;;
+    esac
+done
 if [ $# -ne 2 ]; then
-    echo -e "Upgrade and/or fix an EPUB file using the Bookalope cloud service.\nMissing argument(s)\nUsage: $0 token epub"
+    echo -e "Error parsing command line arguments, exiting"
     exit 1
 fi
 
 TOKEN=$1
 EBOOKFILE=$2
 TMPDIR=$(mktemp -d)
+
+# Check that the Bookalope authentication token has the right format.
+if [[ ! $TOKEN =~ ^[0-9a-fA-F]{32}$ ]]; then
+    echo "Malformed Bookalope API token, exiting"
+    exit 1
+fi
 
 # Make sure that the ebook file actually exists.
 if [ ! -f "$EBOOKFILE" ]; then
@@ -25,14 +84,7 @@ if [ ! `builtin type -p python3` ]; then
     exit 1
 fi
 
-# Check that the Bookalope authentication token has the right format.
-if [[ ! $TOKEN =~ ^[0-9a-fA-F]{32}$ ]]; then
-    echo "Malformed Bookalope API token, exiting"
-    exit 1
-fi
-
-# The Bookalope server.
-APIHOST="https://beta.bookalope.net"
+# Confirm which Bookalope server is being used.
 echo "Talking to Bookalope server $APIHOST"
 
 # Separate path, filename, and extension of the document.
@@ -62,7 +114,7 @@ if [ `builtin type -p http` ]; then
 
     # Create a new book, and use the book's initial bookflow.
     echo "Creating new Book..."
-    read -r BOOKID BOOKFLOWID <<< `http --ignore-stdin --json --print=b --auth $TOKEN: POST $APIHOST/api/books name="$EBOOKBASE" | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['book']['id'], obj['book']['bookflows'][0]['id']);"`
+    read -r BOOKID BOOKFLOWID <<< `http --ignore-stdin --json --print=b --auth $TOKEN: POST $APIHOST/api/books name="$EBOOKBASE" title="$METATITLE" author="$METAAUTHOR" isbn="$METAISBN" publisher="$METAPUBLISHER" | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['book']['id'], obj['book']['bookflows'][0]['id']);"`
     echo "Done, Book id=$BOOKID, Bookflow id=$BOOKFLOWID"
 
     # Upload the ebook file which automatically ingests its content and styling. Passing the `ignore_analysis`
@@ -130,7 +182,7 @@ else
 
         # Create a new book, and use the book's initial bookflow.
         echo "Creating new Book..."
-        read -r BOOKID BOOKFLOWID <<< `curl --silent --show-error --user $TOKEN: --header "Content-Type: application/json" --data '{"name":"'$EBOOKBASE'"}' --request POST $APIHOST/api/books | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['book']['id'], obj['book']['bookflows'][0]['id']);"`
+        read -r BOOKID BOOKFLOWID <<< `curl --silent --show-error --user $TOKEN: --header "Content-Type: application/json" --data "{\"name\":\"$EBOOKBASE\",\"title\":\"$METATITLE\",\"author\":\"$METAAUTHOR\",\"isbn\":\"$METAISBN\",\"publisher\":\"$METAPUBLISHER\"}" --request POST $APIHOST/api/books | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['book']['id'], obj['book']['bookflows'][0]['id']);"`
         echo "Done, Book id=$BOOKID, Bookflow id=$BOOKFLOWID"
 
         # Upload the ebook file which automatically ingests its content and styling. Passing the `ignore_analysis`

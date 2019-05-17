@@ -7,7 +7,7 @@ APIHOST="https://bookflow.bookalope.net"
 APITOKEN=""
 
 # Parse the options and arguments of this script.
-OPTIONS=`getopt --options hbo:t:a:i:p: --longoptions help,beta,token:,title:,author:,isbn:,publisher: -- "$@"`
+OPTIONS=`getopt --options hbo:kt:a:i:p: --longoptions help,beta,token:,keep,title:,author:,isbn:,publisher: -- "$@"`
 if [ $? != 0 ] ; then
     echo -e "Error parsing command line options, exiting"
     exit 1
@@ -22,6 +22,7 @@ while true; do
         echo "  -h, --help           Print this help and exit."
         echo "  -b, --beta           Use Bookalope's Beta server instead of the production server."
         echo "  -o, --token          Use this authentication token."
+        echo "  -k, --keep           Keep the Bookflow on the server, do not delete."
         echo "  -t, --title title    Set the ebook's metadata: title."
         echo "  -a, --author author  Set the ebook's metadata: author."
         echo "  -i, --isbn isbn      Set the ebook's metadata: ISBN number."
@@ -40,6 +41,10 @@ while true; do
             exit 1
         fi
         shift 2
+        ;;
+    -k | --keep)
+        KEEPBOOKFLOW=true
+        shift
         ;;
     -t | --title)
         METATITLE="$2"
@@ -167,9 +172,13 @@ if [ `builtin type -p http` ]; then
     mv $BOOKFLOWID.epub "${EBOOKFILE%.*}-$BOOKFLOWID.epub"
     echo "Saved converted ebook to file ${EBOOKFILE%.*}-$BOOKFLOWID.epub"
 
-    # Delete the book and its bookflow.
-    echo "Deleting Book and Bookflow..."
-    http --ignore-stdin --print= --auth $APITOKEN: DELETE $APIHOST/api/books/$BOOKID
+    # Either delete the Bookflow and its files or keep them.
+    if [ "$KEEPBOOKFLOW" = true ]; then
+        echo "You can continue working with your Bookflow by clicking: $APIHOST/bookflows/$BOOKFLOWID/convert"
+    else
+        echo "Deleting Book and Bookflow..."
+        http --ignore-stdin --print= --auth $APITOKEN: DELETE $APIHOST/api/books/$BOOKID
+    fi
     echo "Done"
 
 else
@@ -237,9 +246,13 @@ else
         mv $BOOKFLOWID.epub "${EBOOKFILE%.*}-$BOOKFLOWID.epub"
         echo "Saved converted ebook to file ${EBOOKFILE%.*}-$BOOKFLOWID.epub"
 
-        # Delete the book and its bookflow.
-        echo "Deleting Book and Bookflow..."
-        curl --silent --show-error --user $APITOKEN: --request DELETE $APIHOST/api/books/$BOOKID
+        # Either delete the Bookflow and its files or keep them.
+        if [ "$KEEPBOOKFLOW" = true ]; then
+            echo "You can continue working with your Bookflow by clicking: $APIHOST/bookflows/$BOOKFLOWID/convert"
+        else
+            echo "Deleting Book and Bookflow..."
+            curl --silent --show-error --user $APITOKEN: --request DELETE $APIHOST/api/books/$BOOKID
+        fi
         echo "Done"
 
     else

@@ -13,7 +13,7 @@
  */
 
 function isToken(token) {
-  return new RegExp("^[0-9a-f]{32}$").test(token);
+  return new RegExp("^[0-9a-f]{32}$").test(token || "");
 }
 
 

@@ -54,7 +54,7 @@ BookalopeError.prototype = Object.create(Error.prototype);
  * services, and it wraps REST API calls into convenient functions.
  *
  * @param {string} token - The Bookalope API token used to authenticate calls.
- * @param {string} betaHost - True if Bookalope's beta host should be used.
+ * @param {boolean} betaHost - True if Bookalope's beta host should be used.
  * @param {string} version - Version of the API to use.
  * @constructor
  */
@@ -63,11 +63,7 @@ var BookalopeClient = function(token, betaHost, version) {
   if (token) {
     this._token = token;
   }
-  if (betaHost) {
-    this._host = "https://beta.bookalope.net";
-  } else {
-    this._host = "https://bookflow.bookalope.net";
-  }
+  this.setHost(betaHost);
   if (version) {
     this._version = version;
   } else {
@@ -222,6 +218,22 @@ BookalopeClient.prototype.httpPOST = function(url, params) {
 BookalopeClient.prototype.httpDELETE = function(url) {
   return this._httpRequest(url, "DELETE", {}, {});
 };
+
+
+/**
+ * Set the host name of the Bookalope server that this client should use for all
+ * subsequent requests. Defaults to the production host.
+ *
+ * @param {boolean} betaHost - True if Bookalope's beta host should be used.
+ */
+
+BookalopeClient.prototype.setHost = function(betaHost) {
+  if (betaHost) {
+    this._host = "https://beta.bookalope.net";
+  } else {
+    this._host = "https://bookflow.bookalope.net";
+  }
+}
 
 
 /**

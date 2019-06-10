@@ -43,12 +43,7 @@ class BookalopeClient {
         if ($token) {
             $this->set_token($token);
         }
-        if ($beta_host) {
-            $this->host = "https://beta.bookalope.net";
-        }
-        else {
-            $this->host = "https://bookflow.bookalope.net";
-        }
+        $this->set_host($beta_host);
         $this->version = $version;
     }
 
@@ -115,6 +110,17 @@ class BookalopeClient {
             return NULL;
         }
         throw new BookalopeException(get_error($response));
+    }
+
+    // Set the host name of the Bookalope server that this client should use for all
+    // subsequent requests. Defaults to the production host.
+    public function set_host($beta_host=FALSE) {
+        if ($beta_host) {
+            $this->host = "https://beta.bookalope.net";
+        }
+        else {
+            $this->host = "https://bookflow.bookalope.net";
+        }
     }
 
     // Set the Bookalope authentication token.

@@ -65,10 +65,7 @@ class BookalopeClient(object):
         self.__token = None
         if token is not None:
             self.__token = token
-        if beta_host:
-            self.__host = "https://beta.bookalope.net"
-        else:
-            self.__host = "https://bookflow.bookalope.net"
+        self.set_host(beta_host)
         self.__version = version
 
     def __repr__(self):
@@ -149,6 +146,18 @@ class BookalopeClient(object):
             return None
         response.raise_for_status()
         assert not "Implement: missed a success code"
+
+    def set_host(self, beta_host=False):
+        """
+        Set the host name of the Bookalope server that this client should use for all subsequent
+        requests. Defaults to the production host.
+
+        :param beta_host bool: True if the client should use Bookalope's Beta server, False otherwise.
+        """
+        if beta_host:
+            self.__host = "https://beta.bookalope.net"
+        else:
+            self.__host = "https://bookflow.bookalope.net"
 
     @property
     def token(self):

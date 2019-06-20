@@ -1,7 +1,3 @@
-/*
- * This file is cloned from https://github.com/jenstroeger/Bookalope/blob/master/clients/javascript/bookalope.js
- */
-
 
 /**
  * Helper function that checks if a given string is a Bookalope token or ID;
@@ -233,7 +229,7 @@ BookalopeClient.prototype.setHost = function(betaHost) {
   } else {
     this._host = "https://bookflow.bookalope.net";
   }
-}
+};
 
 
 /**
@@ -1075,6 +1071,7 @@ Bookflow.prototype.getDocument = function() {
  * @async
  * @param {string} filename - The filename of the document.
  * @param {string} file - A byte array which will be Base64 encoded.
+ * @param {string} filetype - A supported file type: "doc", "epub", or "gutenberg".
  * @param {boolean} skip_analysis - Whether Bookalope should skip structure analysis.
  * @returns {Promise}
  */

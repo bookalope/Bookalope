@@ -879,7 +879,7 @@ class Bookflow(object):
         Bookalope server.
 
         :param str name: The name of the image.
-        :returns byte[]: An array of bytes of the image.
+        :returns bytes: An array of bytes of the image.
         """
         params = {
             "name": name,
@@ -892,7 +892,7 @@ class Bookflow(object):
         Upload the cover image for this bookflow.
 
         :param str image_filename: The file name of the cover image.
-        :param image_bytes: A byte array containing the image.
+        :param bytes image_bytes: A byte array containing the image.
         """
         return self.add_image("cover-image", image_filename, image_bytes)
 
@@ -902,7 +902,7 @@ class Bookflow(object):
 
         :param str name: A name for the image, e.g. 'cover'.
         :param str image_filename: The file name of the cover image.
-        :param image_bytes: A byte array containing the image.
+        :param bytes image_bytes: A byte array containing the image.
         """
         if self.step != "convert":
             raise BookflowError("Can't add image, bookflow must be in 'convert' step")
@@ -928,7 +928,8 @@ class Bookflow(object):
         finished and the document can be converted.
 
         :param str document_filename: The file name of the document.
-        :param document_bytes: A byte array containing the document.
+        :param bytes document_bytes: A byte array containing the document.
+        :param str document_type: The document type, one of "doc", "epub" or "gutenberg".
         :param boolean skip_analysis: Whether to skip the semantic structure analysis of the document.
         """
         if self.step != "files":

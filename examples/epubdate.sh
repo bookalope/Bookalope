@@ -125,13 +125,13 @@ if [ `builtin type -p http` ]; then
     read -r BOOKID BOOKFLOWID <<< `http --ignore-stdin --json --print=b --auth $APITOKEN: POST $APIHOST/api/books name="$EBOOKBASE" title="$METATITLE" author="$METAAUTHOR" isbn="$METAISBN" publisher="$METAPUBLISHER" | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['book']['id'], obj['book']['bookflows'][0]['id']);"`
     echo "Done, Book id=$BOOKID, Bookflow id=$BOOKFLOWID"
 
-    # Upload the ebook file which automatically ingests its content and styling. Passing the `ignore_analysis`
+    # Upload the ebook file which automatically ingests its content and styling. Passing the `skip_analysis`
     # argument here tells Bookalope to ignore the AI-assisted semantic structuring of the ebook, and instead
     # carry through the ebook's visual styles (AKA WYSIWYG conversion). The result is a flat and unstructured
     # ebook, but it is at least a valid EPUB3 file. So make sure you know what you're doing here.
     echo "Uploading and ingesting ebook file: $EBOOKNAME"
     base64 "$EBOOKFILE" > "$TMPDIR/$EBOOKNAME.base64"
-    http --ignore-stdin --json --print= --auth $APITOKEN: POST $APIHOST/api/bookflows/$BOOKFLOWID/files/document file=@"$TMPDIR/$EBOOKNAME.base64" filename="$EBOOKNAME" filetype=epub ignore_analysis=true
+    http --ignore-stdin --json --print= --auth $APITOKEN: POST $APIHOST/api/bookflows/$BOOKFLOWID/files/document file=@"$TMPDIR/$EBOOKNAME.base64" filename="$EBOOKNAME" filetype=epub skip_analysis=true
 
     # Wait until the bookflow's step changes from 'processing' to 'convert', thus indicating that Bookalope
     # has finished noodling through the ebook.
@@ -197,12 +197,12 @@ else
         read -r BOOKID BOOKFLOWID <<< `curl --silent --show-error --user $APITOKEN: --header "Content-Type: application/json" --data "{\"name\":\"$EBOOKBASE\",\"title\":\"$METATITLE\",\"author\":\"$METAAUTHOR\",\"isbn\":\"$METAISBN\",\"publisher\":\"$METAPUBLISHER\"}" --request POST $APIHOST/api/books | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['book']['id'], obj['book']['bookflows'][0]['id']);"`
         echo "Done, Book id=$BOOKID, Bookflow id=$BOOKFLOWID"
 
-        # Upload the ebook file which automatically ingests its content and styling. Passing the `ignore_analysis`
+        # Upload the ebook file which automatically ingests its content and styling. Passing the `skip_analysis`
         # argument here tells Bookalope to ignore the AI-assisted semantic structuring of the ebook, and instead
         # carry through the ebook's visual styles (AKA WYSIWYG conversion). The result is a flat and unstructured
         # ebook, but it is at least a valid EPUB3 file. So make sure you know what you're doing here.
         echo "Uploading and ingesting ebook file: $EBOOKNAME"
-        echo '{"filetype":"epub", "filename":"'$EBOOKNAME'", "ignore_analysis":"true", "file":"' > "$TMPDIR/$EBOOKNAME.json"
+        echo '{"filetype":"epub", "filename":"'$EBOOKNAME'", "skip_analysis":"true", "file":"' > "$TMPDIR/$EBOOKNAME.json"
         base64 "$EBOOKFILE" >> "$TMPDIR/$EBOOKNAME.json"
         echo '"}' >> "$TMPDIR/$EBOOKNAME.json"
         curl --silent --show-error --user $APITOKEN: --header "Content-Type: application/json" --data @"$TMPDIR/$EBOOKNAME.json" --request POST $APIHOST/api/bookflows/$BOOKFLOWID/files/document

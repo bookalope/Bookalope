@@ -6,27 +6,51 @@
 APIHOST="https://bookflow.bookalope.net"
 APITOKEN=""
 
-# Parse the options and arguments of this script.
-OPTIONS=`getopt --options hbo:kt:a:i:p: --longoptions help,beta,token:,keep,title:,author:,isbn:,publisher: -- "$@"`
-if [ $? != 0 ] ; then
-    echo -e "Error parsing command line options, exiting"
-    exit 1
+# Parse the options and arguments of this script. We need to support the old version of
+# `getopt` as well as the updated one. More info: https://github.com/jenstroeger/Bookalope/issues/6
+getopt -T > /dev/null
+GETOPT=$?
+if [ $GETOPT -eq 4 ]; then
+
+    OPTIONS=`getopt --quiet --options hbo:kt:a:i:p: --longoptions help,beta,token:,keep,title:,author:,isbn:,publisher: -- "$@"`
+    if [ $? -ne 0 ]; then
+        echo -e "Error parsing command line options, exiting"
+        exit 1
+    fi
+    eval set -- "$OPTIONS"
+else
+    OPTIONS=`getopt hbo:kt:a:i:p: $* 2> /dev/null`
+    if [ $? -ne 0 ]; then
+        echo -e "Error parsing command line options, exiting"
+        exit 1
+    fi
+    set -- $OPTIONS
 fi
-eval set -- "$OPTIONS"
 while true; do
     case "$1" in
     -h | --help)
-        echo "Usage: $0 [OPTIONS] token epub"
+        echo "Usage: $(basename $0) [OPTIONS] epub"
         echo -e "Upgrade and/or fix an EPUB file using the Bookalope cloud service.\n"
         echo "Options are:"
-        echo "  -h, --help           Print this help and exit."
-        echo "  -b, --beta           Use Bookalope's Beta server instead of the production server."
-        echo "  -o, --token          Use this authentication token."
-        echo "  -k, --keep           Keep the Bookflow on the server, do not delete."
-        echo "  -t, --title title    Set the ebook's metadata: title."
-        echo "  -a, --author author  Set the ebook's metadata: author."
-        echo "  -i, --isbn isbn      Set the ebook's metadata: ISBN number."
-        echo "  -p, --publisher pub  Set the ebook's metadata: publisher."
+        if [ $GETOPT -eq 4 ]; then
+            echo "  -h, --help           Print this help and exit."
+            echo "  -b, --beta           Use Bookalope's Beta server instead of its production server."
+            echo "  -o, --token          Use this authentication token."
+            echo "  -k, --keep           Keep the Bookflow on the server, do not delete."
+            echo "  -t, --title title    Set the ebook's metadata: title."
+            echo "  -a, --author author  Set the ebook's metadata: author."
+            echo "  -i, --isbn isbn      Set the ebook's metadata: ISBN number."
+            echo "  -p, --publisher pub  Set the ebook's metadata: publisher."
+        else
+            echo "  -h            Print this help and exit."
+            echo "  -b            Use Bookalope's Beta server instead of its production server."
+            echo "  -o            Use this authentication token."
+            echo "  -k            Keep the Bookflow on the server, do not delete."
+            echo "  -t title      Set the ebook's metadata: title."
+            echo "  -a author     Set the ebook's metadata: author."
+            echo "  -i isbn       Set the ebook's metadata: ISBN number."
+            echo "  -p publisher  Set the ebook's metadata: publisher."
+        fi
         echo -e "\nNote that the metadata of the original EPUB file overrides the command line options."
         exit 0
         ;;
@@ -73,7 +97,7 @@ while true; do
     esac
 done
 if [ $# -ne 1 ]; then
-    echo -e "Error parsing command line arguments, exiting"
+    echo -e "No EPUB file specified, exiting"
     exit 1
 fi
 

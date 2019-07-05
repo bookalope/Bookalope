@@ -174,7 +174,17 @@ class BookalopeClient {
         return $profile;
     }
 
-    // Return a list of all available books.
+    // Return a list of all available Bookshelf instances on the server.
+    public function get_bookshelves() {
+        $bookshelves = $this->http_get("/api/bookshelves")->bookshelves;
+        $bookshelf_list = array();
+        foreach ($bookshelves as $bookshelf) {
+            $bookshelf_list[] = new Bookshelf($this, $bookshelf);
+        }
+        return $bookshelf_list;
+    }
+
+    // Return a list of all available Book instances on the server.
     public function get_books() {
         $books = $this->http_get("/api/books")->books;
         $book_list = array();
@@ -269,9 +279,96 @@ class Format {
     }
 }
 
-// The Book class describes a single book as used by Bookalope. A book has only
-// one name, and a list of conversions: the Bookflows. Note that title, author,
-// and other information is stored as part of the Bookflow, not the Book itself.
+// The Bookshelf class describes a single bookshelf as used by Bookalope. A
+// Bookshelf may be associated with zero or more Books, and it has a name.
+class Bookshelf {
+
+    // Private reference to the BookalopeClient.
+    private $bookalope;
+
+    // Public attributes of the Book.
+    public $id;
+    public $url;
+    public $name;
+    public $created;
+    public $books;
+
+    // Constructor. If $id_or_packed is NULL then a new bookshelf without any
+    // Books is created; if it's a string then it's expected to be a valid
+    // Bookshelf id and the Bookshelf is retrieved from the Bookalope server;
+    // if it's an object then this instance is initialized based on it.
+    public function __construct($bookalope, $id_or_packed=NULL) {
+        assert($bookalope instanceof BookalopeClient);
+        $this->bookalope = $bookalope;
+        if ($id_or_packed === NULL) {
+            $params = array("name" => "<none>");
+            $url = "/api/bookshelves";
+            $bookshelf = $this->bookalope->http_post($url, $params)->bookshelf;
+        }
+        else if (is_string($id_or_packed)) {
+            if (!is_token($id_or_packed)) {
+                throw new BookalopeTokenException($id_or_packed);
+            }
+            $url = "/api/bookshelves/" . $id_or_packed;
+            $bookshelf = $this->bookalope->http_get($url)->bookshelf;
+        }
+        else if (is_object($id_or_packed)) {
+            $bookshelf = $id_or_packed;
+        }
+        else {
+            throw new BookalopeException("Unexpected parameter type: \$id_or_packed.");
+        }
+        $this->id = $bookshelf->id;
+        $this->url = "/api/bookshelves/" . $this->id;
+        $this->name = $bookshef->name;
+        $this->created = DateTime::createFromFormat("Y-m-d\TH:i:s", $bookshelf->created, new DateTimeZone("UTC"));
+        $this->books = array();
+        foreach ($bookshelf->books as $book) {
+            $this->books[] = new Book($this->bookalope, $this, $book);
+        }
+    }
+
+    // Query the Bookalope server for this Bookshelf's server-side data and update
+    // this instance. Note that this creates a new list of new Book instances
+    // that may alias with other references to this Bookshelf's Books.
+    public function update() {
+        $bookshelf = $this->bookalope->http_get($this->url)->bookshelf;
+        $this->name = $book->name;
+        $this->books = array();
+        foreach ($bookshelf->books as $book) {
+            $this->books[] = new Book($this->bookalope, $bookshelf, $book);
+        }
+        return NULL;
+    }
+
+    // Post this Bookshelf's instance data to the Bookalope server, i.e. store the
+    // name of this Bookshelf.
+    public function save() {
+        $params = array("name" => $this->name);
+        return $this->bookalope->http_post($this->url, $params);
+    }
+
+    // Delete this Bookshelf (and all of its Books and their Bookflows) from the
+    // Bookalope server. Subsequent calls to save() will fail on the server side.
+    public function delete() {
+        return $this->bookalope->http_delete($this->url);
+    }
+
+    // Add the given Book instance to this Bookshelf.
+    public function add_book($book) {
+        return $book->remove_from_bookshelf($this);
+    }
+
+    // Remove the given Book instance from this Bookshelf.
+    public function remove_book($book) {
+        return $book->remove_from_bookshelf();
+    }
+}
+
+// The Book class describes a single book as used by Bookalope. A book may be
+// associated with a Bookshelf, it has only one name, and a list of conversions:
+// the Bookflows. Note that title, author, and other information is stored as
+// part of the Bookflow, not the Book itself.
 class Book {
 
     // Private reference to the BookalopeClient.
@@ -282,17 +379,21 @@ class Book {
     public $url;
     public $name;
     public $created;
+    public $bookshelf;
     public $bookflows;
 
     // Constructor. If $id_or_packed is NULL then a new book with an empty
     // bookflow are created; if it's a string then it's expected to be a valid
     // book id and the book is retrieved from the Bookalope server; if it's an
     // object then this instance is initialized based on it.
-    public function __construct($bookalope, $id_or_packed=NULL) {
+    public function __construct($bookalope, $bookshelf=NULL, $id_or_packed=NULL) {
         assert($bookalope instanceof BookalopeClient);
         $this->bookalope = $bookalope;
         if ($id_or_packed === NULL) {
             $params = array("name" => "<none>");
+            if ($bookshelf) {
+                $params["bookshelf_id"] = $bookshelf->id;
+            }
             $url = "/api/books";
             $book = $this->bookalope->http_post($url, $params)->book;
         }
@@ -302,9 +403,15 @@ class Book {
             }
             $url = "/api/books/" . $id_or_packed;
             $book = $this->bookalope->http_get($url)->book;
+            if ($bookshelf && $book->bookshelf && $bookshelf->book->id != $book->id) {
+                throw new BookalopeException("Bookshelf and Book's bookshelf are not the same");
+            }
         }
         else if (is_object($id_or_packed)) {
             $book = $id_or_packed;
+            if ($bookshelf && $book->bookshelf && $bookshelf->book->id != $book->id) {
+                throw new BookalopeException("Bookshelf and Book's bookshelf are not the same");
+            }
         }
         else {
             throw new BookalopeException("Unexpected parameter type: \$id_or_packed.");
@@ -313,6 +420,15 @@ class Book {
         $this->url = "/api/books/" . $this->id;
         $this->name = $book->name;
         $this->created = DateTime::createFromFormat("Y-m-d\TH:i:s", $book->created, new DateTimeZone("UTC"));
+        if ($bookshelf) {
+            $this->bookshelf = $bookshelf;
+        }
+        else if ($book->bookshelf) {
+            $this->bookshelf = new Bookshelf($this->bookalope, $book->bookshelf->id);
+        }
+        else {
+            $this->bookshelf = NULL;
+        }
         $this->bookflows = array();
         foreach ($book->bookflows as $bookflow) {
             $this->bookflows[] = new Bookflow($this->bookalope, $this, $bookflow);
@@ -321,10 +437,17 @@ class Book {
 
     // Query the Bookalope server for this Book's server-side data and update
     // this instance. Note that this creates a new list of new Bookflow instances
-    // that may alias with other references to this Book's Bookflows.
+    // that may alias with other references to this Book's Bookflows, as well as
+    // a new (optional) Bookshelf instance.
     public function update() {
         $book = $this->bookalope->http_get($this->url)->book;
         $this->name = $book->name;
+        if ($book->bookshelf) {
+            $this->bookshelf = new Bookshelf($this->bookalope, $book->bookshelf->id);
+        }
+        else {
+            $this->bookshelf = NULL;
+        }
         $this->bookflows = array();
         foreach ($book->bookflows as $bookflow) {
             $this->bookflows[] = new Bookflow($this->bookalope, $book, $bookflow);
@@ -335,7 +458,10 @@ class Book {
     // Post this Book's instance data to the Bookalope server, i.e. store the
     // name of this book.
     public function save() {
-        $params = array("name" => $this->name);
+        $params = array(
+            "name" => $this->name,
+            "bookshelf_id" => $this->bookshelf ? $this->bookshelf->id : NULL
+            );
         return $this->bookalope->http_post($this->url, $params);
     }
 
@@ -343,6 +469,19 @@ class Book {
     // will fail on the server side.
     public function delete() {
         return $this->bookalope->http_delete($this->url);
+    }
+
+    // Move this Book onto the specified Bookshelf. If the Book is already
+    // associated with a Bookshelf then it moves to the new one.
+    public function move_to_bookshelf($bookshelf) {
+        $params = array("bookshelf_id" => $bookshelf->id);
+        $this->bookalope->http_post($this->url, $params);
+    }
+
+    // Remove this Book from its Bookshelf.
+    public function remove_from_bookshelf() {
+        $params = array("bookshelf_id" => NULL);
+        $this->bookalope->http_post($this->url, $params);
     }
 
     // Create a new Bookflow on the Bokalope server and return an initialized

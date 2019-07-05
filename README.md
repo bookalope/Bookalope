@@ -46,6 +46,8 @@ To make the use of the REST API more comfortable, language specific wrappers pro
 
 **Book:** The Book class represents a single book as it is handled by Bookalope. It is a wrapper for a number of “book flows,” i.e. conversion runs of different versions of the same book. All book related information like author name, title, ISBN, and so forth are part of the book flow.
 
+**Bookshelf:** The Bookshelf class represents a logical collection of Books. Like a real-world bookshelf, a Book can belong to a single Bookshelf and a Bookshelf may have any number of Books.
+
 **Bookflow:** The Bookflow class represents a single conversion of a book’s manuscript. Because a book may run through several manuscript edits, a Book class contains a number of Bookflows. A Bookflow contains author, title, ISBN, copyright, and other metadata information for the book. It also offers all functions required to step through the conversion of the book.
 
 Bookalope’s object model is *lazy* in a sense that the user may change the properties of an instance at any time without affecting the server data. To push local modifications to the Bookalope server, call an object’s `save()` function; to update a local object with server-side data, call an object’s `update()` function.

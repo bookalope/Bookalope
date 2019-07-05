@@ -20,7 +20,18 @@
   - [POST /api/books/{book_id}](#post-books-id)  
   Modify information for the book with id `book_id`
   - [DELETE /api/books/{book_id}](#delete-books-id)  
-  Delete the book with id `book_id`
+  Delete the book with id `book_id` and all of its bookflows
+- [Bookshelves](#bookshelves)
+  - [GET /api/bookshelves](#get-bookshelves)  
+  Return a list of bookshelves
+  - [POST /api/bookshelves](#post-bookshelves)  
+  Create a new bookshelf
+  - [GET /api/bookshelves/{bookshelf_id}](#get-bookshelves-id)  
+  Return information about the bookshelf with id `bookshelf_id`
+  - [POST /api/bookshelves/{bookshelf_id}](#post-bookshelves-id)  
+  Modify information for the bookshelf with id `bookshelf_id`
+  - [DELETE /api/bookshelves/{bookshelf_id}](#delete-bookshelves-id)  
+  Delete the bookshelf with id `bookshelf_id`, and all of its books
 - [Bookflows](#bookflows)
   - [GET /api/books/{book_id}/bookflows](#get-bookflows)  
   Return a list of bookflows for the book with id `book_id`
@@ -204,7 +215,7 @@ Get the list of book ids for the current profile.
 
 Create a new book with a single empty bookflow.
 
-**Parameters**: `name` (string) is the title for the new book  
+**Parameters**: `name` (string) is the title for the new book, and `bookshelf_id` (string) is the id of an existing bookshelf.  
 **Return**: Information about the new book.  
 **Errors**: n/a
 
@@ -285,7 +296,7 @@ Get the metadata (id, name, creation date, and a list of all bookflows) for the 
 
 Post to update the book name/title. 
 
-**Parameters**: `name` (string) is the new name/title for the book.  
+**Parameters**: `name` (string) is the new name/title for the book, and `bookshelf_id` (string) is the id of an existing bookshelf.  
 **Return**: n/a  
 **Errors**: n/a  
 
@@ -334,6 +345,175 @@ Delete the specified book. Note that deleting a book also deletes all of the boo
     Content-Type: text/html; charset=UTF-8
     Date: Fri, 18 Sep 2015 17:49:28 GMT
     Server: nginx/1.9.4
+
+## Bookshelves
+
+**Note:** In addition to the endpoints below, use [`POST /api/books/{book_id}`](#post-books-id) to move the specified book onto an existing bookshelf or [`POST /api/books`](#post-books) to create a new book on an existing bookshelf.
+
+<a name="get-bookshelves"></a>`GET https://bookflow.bookalope.net/api/bookshelves`
+
+Get the list of bookshelves.
+
+**Parameters**: n/a  
+**Return**: A list of bookshelves and some information about each.  
+**Errors**: n/a  
+
+    ~ > http --auth token: --verbose GET https://bookflow.bookalope.net/api/bookshelves
+    GET /api/bookshelves HTTP/1.1
+    Accept: application/json
+    Accept-Encoding: gzip, deflate
+    Authorization: Basic token
+    Connection: keep-alive
+    Content-Type: application/json
+    Host: bookflow.bookalope.net
+    User-Agent: HTTPie/1.0.2
+
+    HTTP/1.1 200 OK
+    Content-Length: 4689
+    Content-Type: application/json
+    Date: Thu, 30 May 2019 07:23:20 GMT
+    Server: nginx/1.15.7
+
+    {
+        "bookshelves": [
+            {
+                "books": [
+                    {
+                        "bookflows": 1,
+                        "id": "25d4fd28c6264132b00b1a129407a134",
+                        "name": "Schnufte Book"
+                    },
+                    …
+                ],
+                "created": "2019-05-17T05:07:49",
+                "id": "52945eebbb3d4ca8b4a77bf20e67a5a8",
+                "name": "My Bookshelf"
+            },
+            …
+        ]
+    }
+
+<a name="post-bookshelves"></a>`POST https://bookflow.bookalope.net/api/bookshelves`
+
+Create a new bookshelf.
+
+**Parameters**: The only parameter is the `name` (required) of the new bookshelf.  
+**Return**: Information about the new bookshelf.  
+**Errors**: n/a  
+
+    ~ > http --auth token: --verbose POST https://beta.bookalope.net/api/bookshelves name="My Bookshelf"
+    POST /api/bookshelves HTTP/1.1
+    Accept: application/json
+    Accept-Encoding: gzip, deflate
+    Authorization: Basic token
+    Connection: keep-alive
+    Content-Type: application/json
+    Host: bookflow.bookalope.net
+    User-Agent: HTTPie/1.0.2
+
+    {
+        "name": "My Bookshelf"
+    }
+
+    HTTP/1.1 201 Created
+    Content-Length: 128
+    Content-Type: application/json
+    Date: Thu, 30 May 2019 07:56:39 GMT
+    Server: nginx/1.15.7
+
+    {
+        "bookshelf": {
+            "books": [],
+            "created": "2019-05-30T07:56:39",
+            "id": "1600423e867840259527e5a4a7958f4b",
+            "name": "My Bookshelf"
+        }
+    }
+
+<a name="get-bookshelves-id"></a>`GET https://bookflow.bookalope.net/api/bookshelves/{bookshelf_id}`
+
+Get information about the bookshelf with id `bookshelf_id`.
+
+**Parameters**: n/a.  
+**Return**: Information about the specified bookshelf.  
+**Errors**: n/a  
+
+    ~ > http --auth token: --verbose GET https://beta.bookalope.net/api/bookshelves/1600423e867840259527e5a4a7958f4b
+    GET /api/bookshelves/1600423e867840259527e5a4a7958f4b HTTP/1.1
+    Accept: application/json
+    Accept-Encoding: gzip, deflate
+    Authorization: Basic token
+    Connection: keep-alive
+    Content-Type: application/json
+    Host: bookflow.bookalope.net
+    User-Agent: HTTPie/1.0.2
+
+    HTTP/1.1 200 OK
+    Content-Length: 128
+    Content-Type: application/json
+    Date: Thu, 30 May 2019 08:07:07 GMT
+    Server: nginx/1.15.7
+
+    {
+        "bookshelf": {
+            "books": [],
+            "created": "2019-05-30T07:56:39",
+            "id": "1600423e867840259527e5a4a7958f4b",
+            "name": "My Bookshelf"
+        }
+    }
+
+<a name="post-bookshelves-id"></a>`POST https://bookflow.bookalope.net/api/bookshelves/{bookshelf_id}`
+
+Update the information for the specified bookshelf.
+
+**Parameters**: The only parameter is the `name` (required) of the new bookshelf.  
+**Return**: n/a  
+**Errors**: n/a  
+
+    ~ > http --auth token: --verbose POST https://beta.bookalope.net/api/bookshelves/1600423e867840259527e5a4a7958f4b name="Great Shelf of Books"
+    POST /api/bookshelves/1600423e867840259527e5a4a7958f4b HTTP/1.1
+    Accept: application/json
+    Accept-Encoding: gzip, deflate
+    Authorization: Basic token
+    Connection: keep-alive
+    Content-Type: application/json
+    Host: bookflow.bookalope.net
+    User-Agent: HTTPie/1.0.2
+
+    {
+        "name": "Great Shelf of Books"
+    }
+
+    HTTP/1.1 200 OK
+    Content-Length: 0
+    Content-Type: application/json
+    Date: Thu, 30 May 2019 08:12:11 GMT
+    Server: nginx/1.15.7
+
+<a name="delete-bookshelves-id"></a>`DELETE https://bookflow.bookalope.net/api/bookshelves/{bookshelf_id}`
+
+Delete the specified bookshelf, and with it all of its associated books and their bookflows.
+
+**Parameters**: n/a  
+**Return**: n/a  
+**Errors**: n/a  
+
+    ~ > http --auth token: --verbose DELETE https://beta.bookalope.net/api/bookshelves/1600423e867840259527e5a4a7958f4b
+    DELETE /api/bookshelves/1600423e867840259527e5a4a7958f4b HTTP/1.1
+    Accept: application/json
+    Accept-Encoding: gzip, deflate
+    Authorization: Basic token
+    Connection: keep-alive
+    Content-Type: application/json
+    Host: bookflow.bookalope.net
+    User-Agent: HTTPie/1.0.2
+
+    HTTP/1.1 204 No Content
+    Content-Length: 4
+    Content-Type: application/json
+    Date: Thu, 30 May 2019 08:15:44 GMT
+    Server: nginx/1.15.7
 
 ## Bookflows
 

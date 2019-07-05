@@ -221,6 +221,15 @@ class BookalopeClient(object):
         formats = self.http_get("/api/formats")["formats"]
         return [Format(format_) for format_ in formats["import"]]
 
+    def get_bookshelves(self):
+        """
+        Queries the Bookalope server for all Bookshelves of the user.
+
+        :returns list: Returns a list of Bookshelf instances for this user.
+        """
+        bookshelves = self.http_get("/api/bookshelves");
+        return [Bookshelf(self, _) for _ in bookshelves["bookshelves"]]
+
     def get_books(self):
         """
         Queries the Bookalope server for all books associated with the user.
@@ -230,17 +239,19 @@ class BookalopeClient(object):
         books = self.http_get("/api/books")
         return [Book(self, _) for _ in books["books"]]
 
-    def create_book(self, name=None):
+    def create_book(self, bookshelf=None, name=None):
         """
         Create a new Book instance with the given name. Note that the books has
         not been saved to the Bookalope server yet, and needs to be saved. The
         new book has a default name '<none>' which should be changed. Note that
         the new book will also have a single empty Bookflow instance.
 
+        :param bookshelf: An optional Bookshelf instance to associate with the
+                          new Book.
         :param str name: An optional name for the new Book.
         :returns: A Book instance for the new book.
         """
-        return Book(self, name=name)
+        return Book(self, bookshelf=bookshelf, name=name)
 
 
 class Profile(object):
@@ -463,14 +474,166 @@ class Style(object):
         return self.__api_price
 
 
-class Book(object):
+class Bookshelf(object):
     """
-    The Book class describes a single book as used by Bookalope. A book has only
-    one name, and a list of conversions: the Bookflows. Note that title, author,
-    and other information is stored as part of the Bookflow, not the Book itself.
+    The Bookshelf class describes a single bookshelf as used by Bookalope. A
+    Bookshelf may be associated with zero or more Books, and its has a name.
     """
 
     def __init__(self, bookalope, id_or_packed=None, name=None):
+        """
+        Create or initialize a new Bookshelf instance. The new Bookshelf instance is
+        created on the Bookalope server and this instance is initialized with the new
+        data. Note that the default bookshelf name is set to 'Bookshelf'.
+
+        :param bookalope: A Bookalope instance.
+        :param str id_or_packed: None to create a new Bookshelf instance; a valid
+                                 Bookalope token string with a Bookshelf id; or a
+                                 dictionary containing packed bookshelf information.
+        :param str name: An optional name for this Bookshelf.
+        """
+        assert isinstance(bookalope, BookalopeClient)
+        self.__bookalope = bookalope
+        if id_or_packed is None:
+            params = {
+                "name": name or "Bookshelf",
+                }
+            url = "/api/bookshelves"
+            bookshelf = self.__bookalope.http_post(url, params)["bookshelf"]
+        elif isinstance(id_or_packed, str):
+            if not _is_token(id_or_packed):
+                raise TokenError(id_or_packed)
+            url = "/api/bookshelves/" + id_or_packed
+            bookshelf = self.__bookalope.http_get(url)["bookshelf"]
+        elif isinstance(id_or_packed, dict):
+            bookshelf = id_or_packed
+        else:
+            raise TypeError()
+        self.__id = bookshelf["id"]
+        self.__url = "/api/bookshelves/{}".format(self.__id)
+        self.__name = bookshelf["name"]
+        self.__created = datetime.datetime.strptime(bookshelf["created"], "%Y-%m-%dT%H:%M:%S")
+        books = bookshelf["books"]
+        self.__books = [Book(self.__bookalope, self, _) for _ in books]
+
+    def __repr__(self):
+        """Return a printable representation of this instance."""
+        repr_s = "<{}.{} object at {}> JSON: {}".format(
+            self.__class__.__module__,
+            self.__class__.__name__,
+            hex(id(self)),
+            json.dumps(self.pack()))
+        return repr_s
+
+    def update(self):
+        """
+        Queries the Bookalope server for this Bookshelf's server-side data, and
+        updates this instance with that data. Note that this creates a new list
+        with new Book instances, that may compete with references to older Book
+        instances.
+        """
+        bookshelf = self.__bookalope.http_get(self.url)["bookshelf"]
+        self.__name = bookshelf["name"]
+        books = bookshelf["books"]
+        self.__books = [Book(self.__bookalope, self, _) for _ in books]
+
+    def save(self):
+        """
+        Post this Bookshelf's instance data to the Bookalope server, i.e. stores
+        the name of this Bookshelf.
+        """
+        params = {
+            "name": self.__name,
+            }
+        return self.__bookalope.http_post(self.url, params)
+
+    def delete(self):
+        """
+        Delete this Bookshelf (and all of its Books and their Bookflows) from the
+        Bookalope server. Subsequent calls to save() will fail on the server side.
+        """
+        return self.__bookalope.http_delete(self.url)
+
+    def pack(self):
+        """
+        Pack this instance data into a dictionary that can be encoded as a JSON
+        string and is compatible to the Bookalope Bookshelf data.
+
+        :returns dict: This Bookshelf's information as a Bookalope compatible
+                       dictionary.
+        """
+        packed = {
+            "id": self.__id,
+            "name": self.__name,
+            "created": self.__created.strftime("%Y-%m-%dT%H:%M:%S"),
+            "books": [_.pack() for _ in self.__books],
+            }
+        return packed
+
+    @property
+    def id(self):
+        """Return the Bookalope token id for this Bookshelf instance."""
+        return self.__id
+
+    @property
+    def url(self):
+        """Return the API endpoint URL for this Bookshelf instance."""
+        return self.__url
+
+    @property
+    def name(self):
+        """Return the name of this Bookshelf instance."""
+        return self.__name
+
+    @name.setter
+    def name(self, name):
+        """
+        Change the name of this Bookshelf instance locally. Use save() to store the
+        change to the Bookalope server.
+
+        :param str name: The new Bookshelf name.
+        """
+        self.__name = name
+
+    @property
+    def created(self):
+        """
+        Return a Python datetime instance that represents the date when this
+        Bookshelf instance was created.
+        """
+        return self.__created
+
+    @property
+    def books(self):
+        """Return a list of Book instances associated with this Bookshelf."""
+        return self.__books
+
+    def add_book(self, book):
+        """
+        Add the given Book instance to this Bookshelf.
+
+        :param book: The Book that's being added to this Bookshelf.
+        """
+        return book.move_to_bookshelf(self)
+
+    def remove_book(self, book):
+        """
+        Remove the given Book instance from this Bookshelf.
+
+        :param book: The Book that's being added to this Bookshelf.
+        """
+        return book.remove_from_bookshelf()
+
+
+class Book(object):
+    """
+    The Book class describes a single book as used by Bookalope. A Book may be
+    associated with a Bookshelf, it has only one name, and a list of conversions:
+    the Bookflows. Note that title, author, and other information is stored as
+    part of the Bookflow, not the Book itself.
+    """
+
+    def __init__(self, bookalope, bookshelf=None, id_or_packed=None, name=None):
         """
         Create or initialize a new Book instance. The new Book instance is created
         on the Bookalope server and this instance is initialized with the new
@@ -478,6 +641,7 @@ class Book(object):
         bookflow will be created for this book as well.
 
         :param bookalope: A Bookalope instance.
+        :param bookshelf: An optional Bookshelf instance.
         :param str id_or_packed: None to create a new Book instance; a valid
                                  Bookalope token string with a book id; or a
                                  dictionary containing packed book information.
@@ -489,6 +653,8 @@ class Book(object):
             params = {
                 "name": name or "<none>",
                 }
+            if bookshelf:
+                params["bookshelf_id"] = bookshelf.id
             url = "/api/books"
             book = self.__bookalope.http_post(url, params)["book"]
         elif isinstance(id_or_packed, str):
@@ -496,14 +662,24 @@ class Book(object):
                 raise TokenError(id_or_packed)
             url = "/api/books/" + id_or_packed
             book = self.__bookalope.http_get(url)["book"]
+            if bookshelf and book.bookshelf and bookshelf.id != book.bookshelf.id:
+                raise BookflowError("Bookshelf and Book's bookshelf are not the same")
         elif isinstance(id_or_packed, dict):
             book = id_or_packed
+            if bookshelf and book.bookshelf and bookshelf.id != book.bookshelf.id:
+                raise BookflowError("Bookshelf and Book's bookshelf are not the same")
         else:
             raise TypeError()
         self.__id = book["id"]
         self.__url = "/api/books/{}".format(self.__id)
         self.__name = book["name"]
         self.__created = datetime.datetime.strptime(book["created"], "%Y-%m-%dT%H:%M:%S")
+        if bookshelf:
+            self.__bookshelf = bookshelf
+        elif book.bookshelf:
+            self.__bookshelf = Bookshelf(self.__bookalope, book.bookshelf.id)
+        else:
+            self.__bookshelf = None
         bookflows = book["bookflows"]
         self.__bookflows = [Bookflow(self.__bookalope, self, _) for _ in bookflows]
 
@@ -521,10 +697,14 @@ class Book(object):
         Queries the Bookalope server for this Book's server-side data, and updates
         this instance with that data. Note that this creates a new list with new
         Bookflow instances, that may compete with references to older Bookflow
-        instances.
+        instances, as well as a new (optional) Bookshelf instance.
         """
         book = self.__bookalope.http_get(self.url)["book"]
         self.__name = book["name"]
+        if book.bookshelf:
+            self.__bookshelf = Bookshelf(self.__bookalope, book.bookshelf.id)
+        else:
+            self.__bookshelf = None
         bookflows = book["bookflows"]
         self.__bookflows = [Bookflow(self.__bookalope, self, _) for _ in bookflows]
 
@@ -535,6 +715,7 @@ class Book(object):
         """
         params = {
             "name": self.__name,
+            "bookshelf_id": self.__bookshelf.id if self.__bookshelf else None,
             }
         return self.__bookalope.http_post(self.url, params)
 
@@ -557,6 +738,11 @@ class Book(object):
             "id": self.__id,
             "name": self.__name,
             "created": self.__created.strftime("%Y-%m-%dT%H:%M:%S"),
+            "bookshelf": {
+                "id": self.__bookshelf.id,
+                "name": self.__bookshelf.name,
+                "created": self.__bookshelf.created,
+                } if self.__bookshelf else None,
             "bookflows": [_.pack() for _ in self.__bookflows],
             }
         return packed
@@ -593,6 +779,35 @@ class Book(object):
         Book instance was created.
         """
         return self.__created
+
+    @property
+    def bookshelf(self):
+        """
+        Return the Bookshelf instance that this Book is associated with.
+        """
+        return self.__bookshelf
+
+    def move_to_bookshelf(self, bookshelf):
+        """
+        Move this Book onto the specified Bookshelf. If the Book is already associated
+        with a Bookshelf then it moves to the new one.
+
+        :param bookshelf: A Bookshelf instance to which this Book is being added.
+        """
+        assert isinstance(bookshelf, Bookshelf)
+        params = {
+            "bookshelf_id": bookshelf.id,
+            }
+        self.__bookalope.http_post(self.__url, params)
+
+    def remove_from_bookshelf(self):
+        """
+        Remove this Book from its Bookshelf.
+        """
+        params = {
+            "bookshelf_id": None,
+            }
+        self.__bookalope.http_post(self.__url, params)
 
     @property
     def bookflows(self):

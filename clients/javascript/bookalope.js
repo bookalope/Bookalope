@@ -686,38 +686,6 @@ Book.prototype.delete = function() {
 
 
 /**
- * Get the list of Bookflows for this Book instance. Returns a promise that is fulfilled
- * with a list of Bookflow instances or rejected with a BookalopeError.
- *
- * @async
- * @returns {Promise}
- */
-
-Book.prototype.getBookflows = function() {
-  var book = this;
-  var bookalope = book._bookalope;
-
-  return new Promise(function(resolve, reject) {
-    var url = book.url + "/bookflows";
-    bookalope.httpGET(url)
-    .then(function(response) {
-
-      // Create and populate a list of Bookflow from the response data.
-      var bookflowList = [];
-      response.bookflows.forEach(function(bookflow) {
-        bookflowList.push(new Bookflow(bookalope, book, bookflow));
-      });
-
-      resolve(bookflowList);
-    })
-    .catch(function(error) {
-      reject(error);
-    });
-  });
-};
-
-
-/**
  * Create a new Bookflow for this Book instance. Returns a promise that is fulfilled
  * with the newly created Bookflow or rejected with a BookalopeError.
  *

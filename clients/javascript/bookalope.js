@@ -387,7 +387,7 @@ BookalopeClient.prototype.getImportFormats = function() {
 
 /**
  * Get a list of Books. Returns a promise that is fulfilled with a list of Book
- * instance or rejected with a BookalopeError.
+ * instances or rejected with a BookalopeError.
  *
  * @async
  * @returns {Promise}
@@ -431,7 +431,7 @@ BookalopeClient.prototype.createBook = function(name) {
   return new Promise(function(resolve, reject) {
     var url = "/api/books";
     var params = {
-      "name": name || "<none>"
+      name: name || "<none>"
     };
     bookalope.httpPOST(url, params)
     .then(function(response) {

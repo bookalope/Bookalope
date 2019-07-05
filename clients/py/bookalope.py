@@ -237,6 +237,7 @@ class BookalopeClient(object):
         new book has a default name '<none>' which should be changed. Note that
         the new book will also have a single empty Bookflow instance.
 
+        :param str name: An optional name for the new Book.
         :returns: A Book instance for the new book.
         """
         return Book(self, name=name)
@@ -279,7 +280,6 @@ class Profile(object):
         result = self.__bookalope.http_get("/api/profile")
         self.__firstname = result["user"]["firstname"]
         self.__lastname = result["user"]["lastname"]
-        return None
 
     def save(self):
         """
@@ -481,6 +481,7 @@ class Book(object):
         :param str id_or_packed: None to create a new Book instance; a valid
                                  Bookalope token string with a book id; or a
                                  dictionary containing packed book information.
+        :param str name: An optional name for this Book.
         """
         assert isinstance(bookalope, BookalopeClient)
         self.__bookalope = bookalope
@@ -526,7 +527,6 @@ class Book(object):
         self.__name = book["name"]
         bookflows = book["bookflows"]
         self.__bookflows = [Bookflow(self.__bookalope, self, _) for _ in bookflows]
-        return None
 
     def save(self):
         """
@@ -603,6 +603,9 @@ class Book(object):
         """
         Create a new Bookflow on the Bokalope server and return an initialized
         Bookflow instance.
+
+        :param str name: An optional name for this Book.
+        :param str title: An optional title for this Book.
         """
         bookflow = Bookflow(self.__bookalope, self, name=name, title=title)
         self.__bookflows += [bookflow]
@@ -695,7 +698,6 @@ class Bookflow(object):
         self.__language = bookflow["language"]
         self.__pubdate = bookflow["pubdate"]
         self.__publisher = bookflow["publisher"]
-        return None
 
     def save(self):
         """Post this Bookflow's instance data to the Bookalope server."""

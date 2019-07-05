@@ -307,7 +307,7 @@ class Book {
             $book = $id_or_packed;
         }
         else {
-            throw new BookalopeError("Unexpected parameter type: \$id_or_packed.");
+            throw new BookalopeException("Unexpected parameter type: \$id_or_packed.");
         }
         $this->id = $book->id;
         $this->url = "/api/books/" . $this->id;
@@ -343,6 +343,14 @@ class Book {
     // will fail on the server side.
     public function delete() {
         return $this->bookalope->http_delete($this->url);
+    }
+
+    // Create a new Bookflow on the Bokalope server and return an initialized
+    // Bookflow instance.
+    public function create_bookflow() {
+        $bookflow = new Bookflow($this->bookalope, $this);
+        $this->bookflows[] = $bookflow;
+        return $bookflow;
     }
 }
 
@@ -391,12 +399,15 @@ class Bookflow {
             }
             $url = "/api/bookflows/" . $id_or_packed;
             $bookflow = $this->bookalope->http_get($url)->bookflow;
+            if ($bookflow->book->id != $book->id) {
+                throw new BookalopeException("Book and Bookflow's book are not the same");
+            }
         }
         else if (is_object($id_or_packed)) {
             $bookflow = $id_or_packed;
         }
         else {
-            throw new BookalopeError("Unexpected parameter type: \$id_or_packed.");
+            throw new BookalopeException("Unexpected parameter type: \$id_or_packed.");
         }
         $this->id = $bookflow->id;
         $this->name = $bookflow->name;
@@ -518,7 +529,7 @@ class Bookflow {
     // document rather useless for anything but testing purposes.
     public function convert($format, $style, $version="test") {
         if ($this->step !== "convert") {
-            throw new BookalopeError("Can't convert document, bookflow must be in 'convert' step");
+            throw new BookalopeException("Can't convert document, bookflow must be in 'convert' step");
         }
         // Check if a conversion already exists and is maybe available.
         $conversion_key = $format . "-" . $style->short_name . "-" . $version;
@@ -566,7 +577,7 @@ class Bookflow {
             return $this->bookalope->http_get($this->url . "/download/" . $conversion->download_id);
         }
         else {
-            throw new BookalopeError("Bookflow has not been converted yet to " . $format);
+            throw new BookalopeException("Bookflow has not been converted yet to " . $format);
         }
     }
 }

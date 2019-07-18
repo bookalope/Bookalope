@@ -34,8 +34,8 @@ while true; do
         echo "Options are:"
         if [ $GETOPT -eq 4 ]; then
             echo "  -h, --help           Print this help and exit."
-            echo "  -b, --beta           Use Bookalope's Beta server instead of its production server."
-            echo "  -o, --token          Use this authentication token."
+            echo "  -b, --beta           Use Bookalope's Beta server, not its production server."
+            echo "  -o, --token token    Use this authentication token."
             echo "  -k, --keep           Keep the Bookflow on the server, do not delete."
             echo "  -t, --title title    Set the ebook's metadata: title."
             echo "  -a, --author author  Set the ebook's metadata: author."
@@ -43,8 +43,8 @@ while true; do
             echo "  -p, --publisher pub  Set the ebook's metadata: publisher."
         else
             echo "  -h            Print this help and exit."
-            echo "  -b            Use Bookalope's Beta server instead of its production server."
-            echo "  -o            Use this authentication token."
+            echo "  -b            Use Bookalope's Beta server, not its production server."
+            echo "  -o token      Use this authentication token."
             echo "  -k            Keep the Bookflow on the server, do not delete."
             echo "  -t title      Set the ebook's metadata: title."
             echo "  -a author     Set the ebook's metadata: author."

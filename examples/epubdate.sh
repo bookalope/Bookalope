@@ -6,20 +6,23 @@
 APIHOST="https://bookflow.bookalope.net"
 APITOKEN=""
 
+# Generate and download either a "test" version of the ebook (free, but containing some scrambled
+# text) or its "final" version (paid for). Defaults to the test version.
+EBOOKVERSION="test"
+
 # Parse the options and arguments of this script. We need to support the old version of
 # `getopt` as well as the updated one. More info: https://github.com/jenstroeger/Bookalope/issues/6
 getopt -T > /dev/null
 GETOPT=$?
 if [ $GETOPT -eq 4 ]; then
-
-    OPTIONS=`getopt --quiet --options hbo:kt:a:i:p: --longoptions help,beta,token:,keep,title:,author:,isbn:,publisher: -- "$@"`
+    OPTIONS=`getopt --quiet --options hbo:kt:a:i:p:v: --longoptions help,beta,token:,keep,title:,author:,isbn:,publisher:,version: -- "$@"`
     if [ $? -ne 0 ]; then
         echo -e "Error parsing command line options, exiting"
         exit 1
     fi
     eval set -- "$OPTIONS"
 else
-    OPTIONS=`getopt hbo:kt:a:i:p: $* 2> /dev/null`
+    OPTIONS=`getopt hbo:kt:a:i:p:v: $* 2> /dev/null`
     if [ $? -ne 0 ]; then
         echo -e "Error parsing command line options, exiting"
         exit 1
@@ -33,14 +36,15 @@ while true; do
         echo -e "Upgrade and/or fix an EPUB file using the Bookalope cloud service.\n"
         echo "Options are:"
         if [ $GETOPT -eq 4 ]; then
-            echo "  -h, --help           Print this help and exit."
-            echo "  -b, --beta           Use Bookalope's Beta server, not its production server."
-            echo "  -o, --token token    Use this authentication token."
-            echo "  -k, --keep           Keep the Bookflow on the server, do not delete."
-            echo "  -t, --title title    Set the ebook's metadata: title."
-            echo "  -a, --author author  Set the ebook's metadata: author."
-            echo "  -i, --isbn isbn      Set the ebook's metadata: ISBN number."
-            echo "  -p, --publisher pub  Set the ebook's metadata: publisher."
+            echo "  -h, --help             Print this help and exit."
+            echo "  -b, --beta             Use Bookalope's Beta server, not its production server."
+            echo "  -o, --token token      Use this authentication token."
+            echo "  -k, --keep             Keep the Bookflow on the server, do not delete."
+            echo "  -t, --title title      Set the ebook's metadata: title."
+            echo "  -a, --author author    Set the ebook's metadata: author."
+            echo "  -i, --isbn isbn        Set the ebook's metadata: ISBN number."
+            echo "  -p, --publisher pub    Set the ebook's metadata: publisher."
+            echo "  -v, --version version  Download 'test' or 'final' version of the ebook."
         else
             echo "  -h            Print this help and exit."
             echo "  -b            Use Bookalope's Beta server, not its production server."
@@ -50,6 +54,7 @@ while true; do
             echo "  -a author     Set the ebook's metadata: author."
             echo "  -i isbn       Set the ebook's metadata: ISBN number."
             echo "  -p publisher  Set the ebook's metadata: publisher."
+            echo "  -v version    Download 'test' or 'final' version of the ebook."
         fi
         echo -e "\nNote that the metadata of the original EPUB file overrides the command line options."
         exit 0
@@ -84,6 +89,14 @@ while true; do
         ;;
     -p | --publisher)
         METAPUBLISHER="$2"
+        shift 2
+        ;;
+    -v | --version)
+        EBOOKVERSION="$2"
+        if ! [[ "$EBOOKVERSION" =~ ^(test|final)$ ]]; then
+            echo "Version must be either 'test' (free) or 'final' (paid)."
+            exit 1
+        fi
         shift 2
         ;;
     --)
@@ -174,8 +187,8 @@ if [ `builtin type -p http` ]; then
 
     # Convert the ingested ebook file to EPUB3 and download it.
     # Regarding < /dev/tty see: https://github.com/jakubroztocil/httpie/issues/150#issuecomment-21419373
-    echo "Converting to EPUB3 format and downloading ebook file..."
-    DOWNLOAD_URL=`http --auth $APITOKEN: POST $APIHOST/api/bookflows/$BOOKFLOWID/convert format=epub3 version=final < /dev/tty | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['download_url'])"`
+    echo "Converting to EPUB3 format in '$EBOOKVERSION' version, and downloading ebook file..."
+    DOWNLOAD_URL=`http --auth $APITOKEN: POST $APIHOST/api/bookflows/$BOOKFLOWID/convert format=epub3 version="$EBOOKVERSION" < /dev/tty | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['download_url'])"`
     while true; do
         wait 5
         STATUS=`http --auth $APITOKEN: GET $DOWNLOAD_URL/status < /dev/tty | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['status']);"`
@@ -248,8 +261,8 @@ else
 
         # Convert the ingested ebook file to EPUB3 and download it.
         # Regarding < /dev/tty see: https://github.com/jakubroztocil/httpie/issues/150#issuecomment-21419373
-        echo "Converting to EPUB3 format and downloading ebook file..."
-        DOWNLOAD_URL=`curl --silent --show-error --user $APITOKEN: --header "Content-Type: application/json" --data '{"format":"epub3", "version":"final"}' --request POST $APIHOST/api/bookflows/$BOOKFLOWID/convert < /dev/tty | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['download_url'])"`
+        echo "Converting to EPUB3 format in '$EBOOKVERSION' version, and downloading ebook file..."
+        DOWNLOAD_URL=`curl --silent --show-error --user $APITOKEN: --header "Content-Type: application/json" --data '{"format":"epub3", "version":"$EBOOKVERSION"}' --request POST $APIHOST/api/bookflows/$BOOKFLOWID/convert < /dev/tty | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['download_url'])"`
         while true; do
             wait 5
             STATUS=`curl --silent --show-error --user $APITOKEN: --header "Content-Type: application/json" --request GET $DOWNLOAD_URL/status < /dev/tty | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['status']);"`

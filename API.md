@@ -56,7 +56,7 @@
   - [GET /api/bookflows/{id}/scratchpad](#get-scratchpad)  
   Return the content of the bookflow’s scratchpad
   - [POST /api/bookflows/{id}/scratchpad](#post-scratchpad)  
-  Add or update entries of the bookflow’s scratchpad
+  Add, update, or delete entries of the bookflow’s scratchpad
   - [DELETE /api/bookflows/{id}/scratchpad](#delete-scratchpad)  
   Clear the bookflow’s scratchpad
 - [Conversion and Download](#conversion-and-download)
@@ -808,7 +808,7 @@ Post an image with the given name or id for the bookflow. The only image current
 
 ## Scratchpad
 
-Every bookflow has its private scratchpad; a scratchpad is a dictionary of key-value pairs, where keys are strings of 128 characters maximum length and values are `null`, of type `Boolean`, `Number`, or strings of 128 characters maximum length. With every `step` transition of a bookflow, the scratchpad is being erased.
+Every bookflow has its private scratchpad; a scratchpad is a dictionary of key-value pairs, where keys are strings of 128 characters maximum length and values are of type `Boolean`, `Number`, or `String`s of 128 characters maximum length. With every `step` transition of a bookflow, the scratchpad is being erased.
 
 <a name="get-scratchpad"></a>`GET https://bookflow.bookalope.net/api/bookflows/{id}/scratchpad`
 
@@ -840,9 +840,9 @@ Get the current content of a bookflow’s scratchpad.
 
 <a name="post-scratchpad"></a>`POST https://bookflow.bookalope.net/api/bookflows/{id}/scratchpad`
 
-Post, i.e. add or update entries of a bookflow’s scratchpad. If they `key` does not yet exist, add the key-value pair; if the `key` already exists, update the value only.
+Post, i.e. add, update, or delete entries of a bookflow’s scratchpad. If they `key` does not yet exist, add the key-value pair; if the `key` already exists, update the value only; if a value is `null` then the key-value pair is deleted from the scratchpad.
 
-**Parameters**: A dictionary of key-value pairs, both keys and values must be strings no longer than 128 characters long.  
+**Parameters**: A dictionary of key-value pairs, where keys are strings no longer than 128 characters and values must be either `null` or of type `boolean`, `number`, or `string` no longer than 128 characters.  
 **Return**: n/a  
 **Errors**: n/a  
 

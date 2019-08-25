@@ -651,15 +651,19 @@ class Bookflow {
     // Upload a document for this bookflow. This will start the style analysis,
     // and automatically extract the content and structure of the document using
     // Bookalope's default heuristics. Once this call returns, the document is
-    // ready for conversion.
-    public function set_document($filename, $filebytes, $filetype="doc", $skip_analysis=false) {
+    // ready for conversion. Note that the $filetype parameter is optional; if
+    // unspecified then the Bookalope server will attempt to determine the type
+    // of the uploaded file, and how to handle it.
+    public function set_document($filename, $filebytes, $filetype=NULL, $skip_analysis=false) {
         // TODO: Check that bytes are not of an unsupported format.
         $params = array(
             "filename" => $filename,
-            "filetype" => $filetype,
             "file" => base64_encode($filebytes),
             "skip_analysis" => $skip_analysis,
             );
+        if ($filetype && in_array($filetype, array("doc", "epub", "gutenberg"))) {
+            $params["filetype"] = $filetype;
+        }
         return $this->bookalope->http_post($this->url . "/files/document", $params);
     }
 

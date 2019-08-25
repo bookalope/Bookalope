@@ -56,7 +56,9 @@ if [ `builtin type -p http` ]; then
     read -r BOOKID BOOKFLOWID <<< `http --ignore-stdin --json --print=b --auth $TOKEN: POST $APIHOST/api/books name="$DOCBASE" | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['book']['id'], obj['book']['bookflows'][0]['id']);"`
     echo "Done, Book id=$BOOKID, Bookflow id=$BOOKFLOWID"
 
-    # Upload the manuscript which automatically converts it using defaults.
+    # Upload the manuscript which automatically converts it using defaults. Note that the
+    # `filetype` parameter here is optional; if unspecified then the Bookalope server will
+    # attempt to determine the type of the uploaded file, and how to handle it.
     echo "Uploading and analyzing document: $DOCNAME"
     base64 "$DOCFILE" > "$TMPDIR/$DOCNAME.base64"
     http --ignore-stdin --json --print= --auth $TOKEN: POST $APIHOST/api/bookflows/$BOOKFLOWID/files/document file=@"$TMPDIR/$DOCNAME.base64" filename="$DOCNAME" filetype="$DOCTYPE"

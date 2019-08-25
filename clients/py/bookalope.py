@@ -1136,7 +1136,7 @@ class Bookflow(object):
         """
         return self.__bookalope.http_get(self.url + "/files/document")
 
-    def set_document(self, document_filename, document_bytes, document_type="doc", skip_analysis=False):
+    def set_document(self, document_filename, document_bytes, document_type=None, skip_analysis=False):
         """
         Upload a document for this bookflow. This will start the style analysis,
         and automatically extract the content and structure of the document using
@@ -1146,18 +1146,19 @@ class Bookflow(object):
 
         :param str document_filename: The file name of the document.
         :param bytes document_bytes: A byte array containing the document.
-        :param str document_type: The document type, one of "doc", "epub" or "gutenberg".
+        :param str document_type: The optional document type, one of "doc", "epub" or "gutenberg".
         :param boolean skip_analysis: Whether to skip the semantic structure analysis of the document.
         """
         if self.step != "files":
             raise BookflowError("Unable to set document because one is already set")
         # TODO: Check that bytes are not of an unsupported format.
         params = {
-            "filetype": document_type,
             "filename": document_filename,
             "file": base64.b64encode(document_bytes).decode(),
             "skip_analysis": skip_analysis,
             }
+        if document_type and document_type in ("doc", "epub", "gutenberg",):
+            params["filetype"] = document_type
         self.__bookalope.http_post(self.url + "/files/document", params)
         self.__step = "processing"  # Server does the same.
 

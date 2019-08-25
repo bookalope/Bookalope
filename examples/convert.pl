@@ -131,10 +131,11 @@ say 'Created new book ' . $book_id . ' with bookflow ' . $bookflow_id;
 my $api_bookflows = "$api/bookflows/$bookflow_id";
 post_request($api_bookflows, {'name' => 'Bookflow 1', 'title' => $title, 'author' => $author});
 
-# Upload the document.
+# Upload the document. Instead of passing `'filetype' => 'doc'` here, let the Bookalope
+# server determine and handle the uploaded file.
 say 'Uploading document...';
 my $api_document = "$api_bookflows/files/document";
-post_request($api_document, {'filetype' => 'doc', 'filename' => basename($filename), 'file' => encode_base64(read_file($filename))});
+post_request($api_document, {'filename' => basename($filename), 'file' => encode_base64(read_file($filename))});
 
 # Wait until the bookflow has finished processing.
 say 'Waiting for bookflow to finish...';

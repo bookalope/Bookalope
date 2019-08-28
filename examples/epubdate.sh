@@ -17,14 +17,14 @@ GETOPT=$?
 if [ $GETOPT -eq 4 ]; then
     OPTIONS=`getopt --quiet --options hbo:kt:a:i:p:v: --longoptions help,beta,token:,keep,title:,author:,isbn:,publisher:,version: -- "$@"`
     if [ $? -ne 0 ]; then
-        echo -e "Error parsing command line options, exiting"
+        echo "Error parsing command line options, exiting"
         exit 1
     fi
     eval set -- "$OPTIONS"
 else
     OPTIONS=`getopt hbo:kt:a:i:p:v: $* 2> /dev/null`
     if [ $? -ne 0 ]; then
-        echo -e "Error parsing command line options, exiting"
+        echo "Error parsing command line options, exiting"
         exit 1
     fi
     set -- $OPTIONS
@@ -104,13 +104,13 @@ while true; do
         break
         ;;
     *)
-        echo -e "Error parsing command line options, exiting"
+        echo "Error parsing command line options, exiting"
         exit 1
         ;;
     esac
 done
 if [ $# -ne 1 ]; then
-    echo -e "No EPUB file specified, exiting"
+    echo "No EPUB file specified, exiting"
     exit 1
 fi
 

@@ -155,8 +155,14 @@ function wait() {
 # Use httpie to talk to the Bookalope server.
 if [ `builtin type -p http` ]; then
 
-    # Check that the Bookalope token authenticates correctly with the server.
-    if [ ! `http --headers --auth $APITOKEN: GET $APIHOST/api/profile | grep HTTP | cut -d ' ' -f 2` == "200" ]; then
+    # Check if the server is alive and responding, and make sure that the Bookalope token authenticates
+    # correctly with the server.
+    APITEST=`http --headers --auth $APITOKEN: GET $APIHOST/api/profile`
+    if [ $? != 0 ]; then
+        echo "Unable to connect to server $APIHOST, existing"
+        exit 1
+    fi
+    if [ ! `echo "$APITEST" | grep HTTP | cut -d ' ' -f 2` == "200" ]; then
         echo "Wrong Bookalope API token, exiting"
         exit 1
     fi
@@ -227,8 +233,14 @@ else
     # Use curl to talk to the Bookalope server.
     if [ `builtin type -p curl` ]; then
 
-        # Check that the Bookalope token authenticates correctly with the server.
-        if [ ! `curl --silent --show-error --user $APITOKEN: --request GET -s -D - -o /dev/null $APIHOST/api/profile | grep HTTP | cut -d ' ' -f 2` == "200" ]; then
+        # Check if the server is alive and responding, and make sure that the Bookalope token authenticates
+        # correctly with the server.
+        APITEST=`curl --silent --show-error --user $APITOKEN: --request GET -s -D - -o /dev/null $APIHOST/api/profile`
+        if [ $? != 0 ]; then
+            echo "Unable to connect to server $APIHOST, existing"
+            exit 1
+        fi
+        if [ ! `echo "$APITEST" | grep HTTP | cut -d ' ' -f 2` == "200" ]; then
             echo "Wrong Bookalope API token, exiting"
             exit 1
         fi

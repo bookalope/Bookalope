@@ -117,9 +117,13 @@ fi
 EBOOKFILE=$1
 TMPDIR=$(mktemp -d)
 
-# Make sure that the ebook file actually exists.
+# Make sure that the ebook file actually exists, and that it's an EPUB file.
 if [ ! -f "$EBOOKFILE" ]; then
-    echo "Ebook file $EBOOKFILE does not exist, exiting"
+    echo "Specified file $EBOOKFILE does not exist, exiting"
+    exit 1
+fi
+if [ `builtin type -p file` ] && [ `file --mime-type --brief $EBOOKFILE` != "application/epub+zip" ]; then
+    echo "Specified file $EBOOKFILE is not an EPUB file, exiting"
     exit 1
 fi
 

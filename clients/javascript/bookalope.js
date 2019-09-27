@@ -611,6 +611,7 @@ var Bookshelf = function(bookalope, idOrJson) {
     this.id = book.id;
     this.url = "/api/bookshelves/" + this.id;
     this.name = bookshelf.name;
+    this.description = bookshelf.description;
     this.created = new Date(bookshelf.created);
     this.books = [];
     if (bookshelf.books) {
@@ -649,6 +650,7 @@ Bookshelf.prototype.update = function() {
       // Update this Bookshelf's properties from the response data. This also
       // re-populates the list of Books.
       bookshelf.name = response.bookshelf.name;
+      bookshelf.description = response.bookshelf.description;
       bookshelf.books.length = 0;
       response.bookshelf.books.forEach(function(book) {
         bookshelf.books.push(new Book(bookalope, book));
@@ -678,7 +680,8 @@ Bookshelf.prototype.save = function() {
   return new Promise(function(resolve, reject) {
     var url = bookshelf.url;
     var params = {
-      name: this.name
+      name: this.name,
+      description: this.description
     };
     bookalope.httpPOST(url, params)
     .then(function(response) {

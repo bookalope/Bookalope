@@ -290,6 +290,7 @@ class Bookshelf {
     public $id;
     public $url;
     public $name;
+    public $description;
     public $created;
     public $books;
 
@@ -321,6 +322,7 @@ class Bookshelf {
         $this->id = $bookshelf->id;
         $this->url = "/api/bookshelves/" . $this->id;
         $this->name = $bookshef->name;
+        $this->description = $bookshelf->description;
         $this->created = DateTime::createFromFormat("Y-m-d\TH:i:s", $bookshelf->created, new DateTimeZone("UTC"));
         $this->books = array();
         foreach ($bookshelf->books as $book) {
@@ -333,7 +335,8 @@ class Bookshelf {
     // that may alias with other references to this Bookshelf's Books.
     public function update() {
         $bookshelf = $this->bookalope->http_get($this->url)->bookshelf;
-        $this->name = $book->name;
+        $this->name = $bookshelf->name;
+        $this->description = $bookshelf->description;
         $this->books = array();
         foreach ($bookshelf->books as $book) {
             $this->books[] = new Book($this->bookalope, $bookshelf, $book);
@@ -344,7 +347,10 @@ class Bookshelf {
     // Post this Bookshelf's instance data to the Bookalope server, i.e. store the
     // name of this Bookshelf.
     public function save() {
-        $params = array("name" => $this->name);
+        $params = array(
+            "name" => $this->name,
+            "description" => $this->description
+            );
         return $this->bookalope->http_post($this->url, $params);
     }
 

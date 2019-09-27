@@ -204,6 +204,7 @@ Get the list of book ids for the current profile.
                         "name": "Bookflow 2"
                     }
                 ],
+                "bookshelf": null,
                 "created": "2015-09-16T00:06:41",
                 "id": "f99f21dd598840d5b7caf9bf39a51b00",
                 "name": "Bla Test"
@@ -248,6 +249,7 @@ Create a new book with a single empty bookflow.
                     "name": null
                 }
             ],
+            "bookshelf": null,
             "created": "2015-09-18T17:34:16.661944",
             "id": "29fdc01dddb345268400bebef45b9d9e",
             "name": "Great New Book"
@@ -286,6 +288,7 @@ Get the metadata (id, name, creation date, and a list of all bookflows) for the 
                     "name": null
                 }
             ],
+            "bookshelf": null,
             "created": "2015-09-18T17:34:17",
             "id": "29fdc01dddb345268400bebef45b9d9e",
             "name": "Great New Book"
@@ -386,6 +389,7 @@ Get the list of bookshelves.
                     …
                 ],
                 "created": "2019-05-17T05:07:49",
+                "description": null,
                 "id": "52945eebbb3d4ca8b4a77bf20e67a5a8",
                 "name": "My Bookshelf"
             },
@@ -397,11 +401,11 @@ Get the list of bookshelves.
 
 Create a new bookshelf.
 
-**Parameters**: The only parameter is the `name` (required) of the new bookshelf.  
+**Parameters**: The only parameter is the `name` (required) of the new bookshelf, and an optional `description`.  
 **Return**: Information about the new bookshelf.  
 **Errors**: n/a  
 
-    ~ > http --auth token: --verbose POST https://beta.bookalope.net/api/bookshelves name="My Bookshelf"
+    ~ > http --auth token: --verbose POST https://beta.bookalope.net/api/bookshelves name="My Bookshelf" description="This is my awesome bookshelf"
     POST /api/bookshelves HTTP/1.1
     Accept: application/json
     Accept-Encoding: gzip, deflate
@@ -412,7 +416,8 @@ Create a new bookshelf.
     User-Agent: HTTPie/1.0.2
 
     {
-        "name": "My Bookshelf"
+        "description": "This is my awesome bookshelf",
+        "name": "My Bookshelf",
     }
 
     HTTP/1.1 201 Created
@@ -425,6 +430,7 @@ Create a new bookshelf.
         "bookshelf": {
             "books": [],
             "created": "2019-05-30T07:56:39",
+            "description": "This is my awesome bookshelf",
             "id": "1600423e867840259527e5a4a7958f4b",
             "name": "My Bookshelf"
         }
@@ -434,7 +440,7 @@ Create a new bookshelf.
 
 Get information about the bookshelf with id `bookshelf_id`.
 
-**Parameters**: n/a.  
+**Parameters**: n/a  
 **Return**: Information about the specified bookshelf.  
 **Errors**: n/a  
 
@@ -458,6 +464,7 @@ Get information about the bookshelf with id `bookshelf_id`.
         "bookshelf": {
             "books": [],
             "created": "2019-05-30T07:56:39",
+            "description": "This is my awesome bookshelf",
             "id": "1600423e867840259527e5a4a7958f4b",
             "name": "My Bookshelf"
         }

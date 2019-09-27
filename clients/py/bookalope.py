@@ -480,7 +480,7 @@ class Bookshelf(object):
     Bookshelf may be associated with zero or more Books, and its has a name.
     """
 
-    def __init__(self, bookalope, id_or_packed=None, name=None):
+    def __init__(self, bookalope, id_or_packed=None, name=None, description=None):
         """
         Create or initialize a new Bookshelf instance. The new Bookshelf instance is
         created on the Bookalope server and this instance is initialized with the new
@@ -491,6 +491,7 @@ class Bookshelf(object):
                                  Bookalope token string with a Bookshelf id; or a
                                  dictionary containing packed bookshelf information.
         :param str name: An optional name for this Bookshelf.
+        :param str description: An optional description for this Bookshelf.
         """
         assert isinstance(bookalope, BookalopeClient)
         self.__bookalope = bookalope
@@ -498,6 +499,8 @@ class Bookshelf(object):
             params = {
                 "name": name or "Bookshelf",
                 }
+            if description:
+                params["description"] = description
             url = "/api/bookshelves"
             bookshelf = self.__bookalope.http_post(url, params)["bookshelf"]
         elif isinstance(id_or_packed, str):
@@ -512,6 +515,7 @@ class Bookshelf(object):
         self.__id = bookshelf["id"]
         self.__url = "/api/bookshelves/{}".format(self.__id)
         self.__name = bookshelf["name"]
+        self.__description = bookshelf["description"]
         self.__created = datetime.datetime.strptime(bookshelf["created"], "%Y-%m-%dT%H:%M:%S")
         books = bookshelf["books"]
         self.__books = [Book(self.__bookalope, self, _) for _ in books]
@@ -534,6 +538,7 @@ class Bookshelf(object):
         """
         bookshelf = self.__bookalope.http_get(self.url)["bookshelf"]
         self.__name = bookshelf["name"]
+        self.__description = bookshelf["description"]
         books = bookshelf["books"]
         self.__books = [Book(self.__bookalope, self, _) for _ in books]
 
@@ -544,6 +549,7 @@ class Bookshelf(object):
         """
         params = {
             "name": self.__name,
+            "description": self.__description,
             }
         return self.__bookalope.http_post(self.url, params)
 
@@ -565,6 +571,7 @@ class Bookshelf(object):
         packed = {
             "id": self.__id,
             "name": self.__name,
+            "description": self.__description,
             "created": self.__created.strftime("%Y-%m-%dT%H:%M:%S"),
             "books": [_.pack() for _ in self.__books],
             }
@@ -594,6 +601,21 @@ class Bookshelf(object):
         :param str name: The new Bookshelf name.
         """
         self.__name = name
+
+    @property
+    def description(self):
+        """Return the description for this Bookshelf instance."""
+        return self.__description
+
+    @description.setter
+    def description(self, description):
+        """
+        Change the description for this Bookshelf instance locally. Use save() to store the
+        change to the Bookalope server.
+
+        :param str description: The new Bookshelf description.
+        """
+        self.__description = description
 
     @property
     def created(self):
@@ -741,6 +763,7 @@ class Book(object):
             "bookshelf": {
                 "id": self.__bookshelf.id,
                 "name": self.__bookshelf.name,
+                "description": self.__bookshelf.description,
                 "created": self.__bookshelf.created,
                 } if self.__bookshelf else None,
             "bookflows": [_.pack() for _ in self.__bookflows],

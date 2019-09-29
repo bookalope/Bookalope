@@ -45,6 +45,10 @@ def main():
     book = b_client.create_book()
     bookflow = book.bookflows[0]
 
+    # If we've purchased a plan through the Bookalope website, then we can now
+    # credit this Bookflow, thus getting access to the full version of the book.
+    bookflow.set_credit("pro")  # Or 'basic', depending on the plan.
+
     # Set title and author for this bookflow, and save.
     if args.title or args.author:
         bookflow.title = args.title

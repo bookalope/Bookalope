@@ -74,6 +74,10 @@ try {
     $book->save();
     $bookflow->save();
 
+    // If we've purchased a plan through the Bookalope website, then we can now
+    // credit this Bookflow, thus getting access to the full version of the book.
+    // $bookflow->set_credit("pro");  // Or "basic", depending on the plan.
+
     // Upload the manuscript document. We skip the book cover and let Bookalope
     // generate one.
     error_log("Uploading document...");

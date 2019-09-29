@@ -899,6 +899,10 @@ class Bookflow(object):
         self.__id = bookflow["id"]
         self.__name = bookflow["name"]
         self.__step = bookflow["step"]
+        self.__credit = None
+        if bookflow["credit"]:
+            self.__credit = bookflow["credit"]["type"]
+            # TODO: Does a client want to know formats here as well?
         self.__book = book
         self.__url = "/api/bookflows/{}".format(self.__id)
         # Metadata that can be modified.
@@ -929,6 +933,10 @@ class Bookflow(object):
         bookflow = self.__bookalope.http_get(self.url)["bookflow"]
         self.__name = bookflow["name"]
         self.__step = bookflow["step"]
+        self.__credit = None
+        if bookflow["credit"]:
+            self.__credit = bookflow["credit"]["type"]
+            # TODO: Does a client want to know formats here as well?
         self.__title = bookflow["title"]
         self.__author = bookflow["author"]
         self.__copyright = bookflow["copyright"]
@@ -942,7 +950,7 @@ class Bookflow(object):
         params = {
             "name": self.__name,
             }
-        params.update({k:v for k, v in self.metadata().items() if v is not None})
+        params.update({k: v for k, v in self.metadata().items() if v is not None})
         return self.__bookalope.http_post(self.url, params)
 
     def delete(self):
@@ -968,6 +976,7 @@ class Bookflow(object):
             "id": self.__id,
             "name": self.__name,
             "step": self.__step,
+            "credit": self.__credit,
             }
         return packed
 
@@ -1012,6 +1021,14 @@ class Bookflow(object):
         it, but it can not be modified.
         """
         return self.__step
+
+    @property
+    def credit(self):
+        """
+        Return the credit type associated with this Bookflow, either None, 'basic',
+        or 'pro'.
+        """
+        return self.__credit
 
     @property
     def book(self):
@@ -1109,6 +1126,20 @@ class Bookflow(object):
         """Return True if the bookflow is currently being processed; False otherwise."""
         return self.step == "processing"
 
+    def set_credit(self, credit):
+        """
+        Add the specified credit type to this Bookflow.
+
+        :param str credit: The credit type, either 'basic' or 'pro'.
+        """
+        if credit not in ("basic", "pro"):
+            raise BookflowError("Invalid credit type")
+        params = {
+            "type": credit,
+            }
+        self.__bookalope.http_post(self.url + "/credit", params)
+        self.__credit = credit
+
     def get_cover_image(self):
         """Download the cover image as a byte array from the Bookalope server."""
         return self.get_image("cover-image")
@@ -1185,73 +1216,69 @@ class Bookflow(object):
         self.__bookalope.http_post(self.url + "/files/document", params)
         self.__step = "processing"  # Server does the same.
 
-    def convert(self, format_, style=None, version="test"):
+    def convert(self, format_, style=None):
         """
-        Initiate the conversion of a bookflow's document. Note that converting
-        a 'test' version shuffles the letters of random words, thus making the
+        Initiate the conversion of a bookflow's document. If no plan was associated
+        with the bookflow then a *test version* of the document is produced. A
+        'test' version shuffles the letters of random words, thus making the
         document rather useless for anything but testing purposes.
 
         :param str format_: A valid format string, one of 'epub', 'epub3', 'mobi',
                            'pdf', 'icml', 'docx', 'docbook', 'htmlbook'.
         :param style: A Style instance describing the styling for the converted
                       document.
-        :param str version: Either a 'test' or 'final' version of the document.
         """
         if self.step != "convert":
             raise BookflowError("Can't convert document, bookflow must be in 'convert' step")
         styling = style.short_name if style else "default"
         # Check if a conversion already exists and is maybe available.
-        conversion_key = "{}-{}-{}".format(format_, styling, version)
+        conversion_key = "{}-{}".format(format_, styling)
         conversion = self.__conversions.get(conversion_key, None)
         if conversion:
             status = conversion["status"]
             if status == "processing":
                 return  # Conversion already in progress, do nothing.
-            if status == "ok":
+            if status == "available":
                 return  # Conversion has finished and download is available, do nothing.
         # Initiate a new conversion on the server.
         params = {
             "format": format_,
             "styling": styling,
-            "version": version,
             }
         conversion = self.__bookalope.http_post(self.url + "/convert", params)
         self.__conversions[conversion_key] = conversion
 
-    def convert_status(self, format_, style=None, version="test"):
+    def convert_status(self, format_, style=None):
         """
-        Check the status of the bookflow's file conversion for the specified format, style,
-        and version.
+        Check the status of the bookflow's file conversion for the specified format and style.
 
         :param str format_: Same as `convert` method.
         :param style: Same as `convert` method.
-        :param str version: Same as `convert` method.
-        :return: A string that is either 'processing', 'ok' (conversion finished), 'failed',
-                 or 'na' (no conversion initiated yet).
+        :return: A string that is either 'processing', 'available' (conversion finished), 'failed',
+                 or 'none' (no conversion initiated yet).
         """
         styling = style.short_name if style else "default"
-        conversion_key = "{}-{}-{}".format(format_, styling, version)
+        conversion_key = "{}-{}".format(format_, styling)
         conversion = self.__conversions.get(conversion_key, None)
         if conversion is None:
-            return "na"
-        conversion = self.__bookalope.http_get(self.url + "/download/" + conversion["download_id"] + "/status")
+            return "none"
+        conversion = self.__bookalope.http_get(self.url + "/download/" + format_ + "/status")
         return conversion["status"]
 
-    def convert_download(self, format_, style=None, version="test"):
+    def convert_download(self, format_, style=None):
         """
-        Once `convert_status` method returns 'ok', the converted file can be downloaded
+        Once `convert_status` method returns 'available', the converted file can be downloaded
         and is returned by this method.
 
         :param str format_: Same as `convert` method.
         :param style: Same as `convert` method.
-        :param str version: Same as `convert` method.
         :return: A bytes object containing the converted document, or None if converted document
-                 was not available (status 'na').
-        :raises: A HTTPException (Bad Request) if the conversion was not in 'ok' status.
+                 was not available (any status but 'available').
+        :raises: A HTTPException (Bad Request) if the conversion was not in 'available' status.
         """
         styling = style.short_name if style else "default"
-        conversion_key = "{}-{}-{}".format(format_, styling, version)
+        conversion_key = "{}-{}".format(format_, styling)
         conversion = self.__conversions.get(conversion_key, None)
         if conversion is None:
             return None  # raise BookflowError?
-        return self.__bookalope.http_get(self.url + "/download/" + conversion["download_id"])
+        return self.__bookalope.http_get(self.url + "/download/" + format_)

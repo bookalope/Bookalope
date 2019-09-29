@@ -131,6 +131,10 @@ say 'Created new book ' . $book_id . ' with bookflow ' . $bookflow_id;
 my $api_bookflows = "$api/bookflows/$bookflow_id";
 post_request($api_bookflows, {'name' => 'Bookflow 1', 'title' => $title, 'author' => $author});
 
+# If we've purchased a plan through the Bookalope website, then we can now credit
+# this Bookflow, thus getting access to the full version of the book.
+# post_request("$api_bookflows/credit", {'type' => 'pro'});  # Or 'basic', depending on the plan.
+
 # Upload the document. Instead of passing `'filetype' => 'doc'` here, let the Bookalope
 # server determine and handle the uploaded file.
 say 'Uploading document...';

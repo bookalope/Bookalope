@@ -43,6 +43,8 @@
   Modify the information of the bookflow with id `id`
   - [DELETE /api/bookflows/{id}](#delete-bookflows-id)  
   Delete the bookflow with id `id`
+  - [POST /api/bookflows/{id}/credit](#post-bookflows-id-credit)  
+  Add a previously purchased conversion credit to the bookflow with id `id`.
 - [Document and Image Handling](#document-and-image-handling)
   - [GET /api/bookflows/{id}/files/document](#get-bookflows-files-document)  
   Return the bookflow’s original document file, if it exists
@@ -66,10 +68,10 @@
   Return styling information for all or a specific export file format
   - [POST /api/bookflows/{id}/convert](#post-bookflows-convert)  
   Initiate the conversion of the bookflow’s document
-  - [GET /api/bookflows/{id}/download/{fid}/status](#get-bookflows-download-status)  
+  - [GET /api/bookflows/{id}/download/{format}/status](#get-bookflows-download-status)  
   Check the status of the conversion of the bookflow’s document
-  - [POST /api/bookflows/{id}/download/{fid}](#get-bookflows-download)  
-  Donwload the bookflow’s converted document
+  - [POST /api/bookflows/{id}/download/{format}](#get-bookflows-download)  
+  Download the bookflow’s converted document
 
 ## Overview
 
@@ -197,11 +199,13 @@ Get the list of book ids for the current profile.
                 "bookflows": [
                     {
                         "id": "143b2a9e7c844d1281a1e593c7b10248",
-                        "name": "Bookflow 1"
+                        "name": "Bookflow 1",
+                        "step": "structure"
                     },
                     {
                         "id": "a469de3069dd4b9ca58b425352107310",
                         "name": "Bookflow 2"
+                        "step": "convert"
                     }
                 ],
                 "bookshelf": null,
@@ -246,7 +250,8 @@ Create a new book with a single empty bookflow.
             "bookflows": [
                 {
                     "id": "ce1cebb526df44f5930cef992cd9d396",
-                    "name": null
+                    "name": null,
+                    "step": "files"
                 }
             ],
             "bookshelf": null,
@@ -285,7 +290,8 @@ Get the metadata (id, name, creation date, and a list of all bookflows) for the 
             "bookflows": [
                 {
                     "id": "ce1cebb526df44f5930cef992cd9d396",
-                    "name": null
+                    "name": null,
+                    "step": "content"
                 }
             ],
             "bookshelf": null,
@@ -551,8 +557,10 @@ Get the list of bookflow ids for the currect book.
     {
         "bookflows": [
             {
+                "credit": null,
                 "id": "c40973105a964afdad2e96f6b22b2c27",
-                "name": null
+                "name": null,
+                "step": "convert"
             }
         ]
     }
@@ -590,8 +598,10 @@ Post to create a new bookflow for the given book and return the new bookflow `id
     
     {
         "bookflow": {
+            "credit": null,
             "id": "56b7f0c370ec4a78b1154f09c5934f13",
-            "name": "Bookflow 1"
+            "name": "Bookflow 1",
+            "step": "files"
         }
     }
 
@@ -623,6 +633,14 @@ Get all metadata for the bookflow with that id.
         "bookflow": {
             "author": "Joe Regular",
             "copyright": "",
+            "credit": {
+                "formats": [
+                    "epub3",
+                    "mobi",
+                    "pdf"
+                ],
+                "type": "basic"
+            },
             "id": "56b7f0c370ec4a78b1154f09c5934f13",
             "isbn": "000-0-00-000000-0",
             "language": "en-US",
@@ -666,7 +684,7 @@ Post to update the meta data for the given bookflow.
     Date: Fri, 18 Sep 2015 18:37:05 GMT
     Server: nginx/1.9.4
 
-<a name="delete-bookflows-id"></a>`DELETE https://bookflow.bookalope.net/api/bookflows/{id}`
+<a name="delete-bookflows-id"></a> `DELETE https://bookflow.bookalope.net/api/bookflows/{id}`
 
 Delete the specified bookflow.
 
@@ -690,6 +708,36 @@ Delete the specified bookflow.
     Content-Type: text/html; charset=UTF-8
     Date: Fri, 18 Sep 2015 22:26:41 GMT
     Server: nginx/1.9.4
+
+<a name="post-bookflows-id-credit"></a> `POST https://bookflow.bookalope.net/api/bookflows/{id}/credit`
+
+Using the [Billing page](https://bookflow.bookalope.net/billing) a user can purchase a [Plan](https://bookalope.net/#pricing) which credits a number of conversions to the user’s account. This endpoint then allows a user to spend one of these credits on the specified Bookflow.
+
+**Parameters**: The type of plan from which the Bookflow credit should be subtracted, either `"basic"` or `"pro"`.  
+**Return**: n/a  
+**Errors**: `400` if the Bookflow has already been credited, if the Bookflow is currently processing or has failed, or if no credits are available for the specified plan.
+
+    ~ > http --auth token: --verbose POST https://bookflow.bookalope.net/api/bookflows/80c0ef19b8d142708a26596d49de0f1c/credit type=basic
+    POST /api/bookflows/80c0ef19b8d142708a26596d49de0f1c/credit HTTP/1.1
+    Accept: application/json, */*
+    Accept-Encoding: gzip, deflate
+    Authorization: Basic token
+    Connection: keep-alive
+    Content-Length: 17
+    Content-Type: application/json
+    Host: bookflow.bookalope.net
+    User-Agent: HTTPie/1.0.3
+
+    {
+        "type": "basic"
+    }
+
+    HTTP/1.1 200 OK
+    Content-Length: 4
+    Content-Type: application/json
+    Date: Tue, 24 Sep 2019 08:56:58 GMT
+    Server: waitress
+    X-Content-Type-Options: nosniff
 
 ## Document and Image Handling
 
@@ -1045,9 +1093,9 @@ Initiate the conversion of the bookflow’s document into a target format and st
         "status": "processing"
     }
 
-<a name="get-bookflows-download-status"></a>`GET https://bookflow.bookalope.net/bookflows/{id}/download/{fid}/status`
+<a name="get-bookflows-download-status"></a>`GET https://bookflow.bookalope.net/bookflows/{id}/download/{format}/status`
 
-Get the current status of the converted document. Valid status values are `'processing'` (the document is currently converting), `'ok'` (the document has been converted successfully and is ready for download), `'failed'` (the document failed to convert and can not be downloaded), and `'na'` (no conversion is available, and needs to be triggered by calling the `/convert` endpoint).
+Get the current status of the converted document. Valid status values are `'processing'` (the document is currently converting), `'available'` (the document has been converted successfully and is ready for download), `'failed'` (the document failed to convert and can not be downloaded), and `'none'` (no conversion is available, and needs to be triggered by calling the `/convert` endpoint).
 
 Note that the URL is the same as returned by the `/convert` endpoint!
 
@@ -1055,8 +1103,8 @@ Note that the URL is the same as returned by the `/convert` endpoint!
 **Return:** Information about the document’s processing status.  
 **Errors:** n/a
 
-    ~ > http --auth token: --verbose GET https://bookflow.bookalope.net/bookflows/d441bf24d81b4f7a849fc77359f6d775/download/211fc053a02d487cbb412c25fc7f8501/status
-    GET /bookflows/d441bf24d81b4f7a849fc77359f6d775/download/211fc053a02d487cbb412c25fc7f8501/status HTTP/1.1
+    ~ > http --auth token: --verbose GET https://bookflow.bookalope.net/bookflows/d441bf24d81b4f7a849fc77359f6d775/download/ebub3/status
+    GET /bookflows/d441bf24d81b4f7a849fc77359f6d775/download/epub3/status HTTP/1.1
     Accept: application/json, */*
     Accept-Encoding: gzip, deflate
     Authorization: Basic token
@@ -1073,20 +1121,20 @@ Note that the URL is the same as returned by the `/convert` endpoint!
     X-Content-Type-Options: nosniff
 
     {
-        "download_id": "211fc053a02d487cbb412c25fc7f8501",
-        "status": "ok"
+        "download_url": "https://bookflow.bookalope.net/api/bookflows/3319a466eb7744449741dc90dd21e8ee/download/epub3",
+        "status": "available"
     }
 
-<a name="get-bookflows-download"></a>`GET https://bookflow.bookalope.net/bookflows/{id}/download/{fid}`
+<a name="get-bookflows-download"></a>`GET https://bookflow.bookalope.net/bookflows/{id}/download/{format}`
 
 Download the specified converted document.
 
 **Parameters:** n/a  
 **Return:** The converted document attachment to the response.  
-**Errors:** `400` if the status of the conversion is anything else but `'ok'`.
+**Errors:** `400` if the status of the conversion is anything else but `'available'`; `406` if the converted file is not (yet) available.
 
     ~ > http --auth token: --verbose --download GET https://bookflow.bookalope.net/bookflows/d441bf24d81b4f7a849fc77359f6d775/download/211fc053a02d487cbb412c25fc7f8501
-    GET /bookflows/d441bf24d81b4f7a849fc77359f6d775/download/211fc053a02d487cbb412c25fc7f8501 HTTP/1.1
+    GET /bookflows/d441bf24d81b4f7a849fc77359f6d775/download/epub3 HTTP/1.1
     Accept: application/json, */*
     Accept-Encoding: identity
     Authorization: Basic token

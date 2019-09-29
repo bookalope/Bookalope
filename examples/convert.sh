@@ -56,6 +56,11 @@ if [ `builtin type -p http` ]; then
     read -r BOOKID BOOKFLOWID <<< `http --ignore-stdin --json --print=b --auth $TOKEN: POST $APIHOST/api/books name="$DOCBASE" | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['book']['id'], obj['book']['bookflows'][0]['id']);"`
     echo "Done, Book id=$BOOKID, Bookflow id=$BOOKFLOWID"
 
+    # If we've purchased a plan through the Bookalope website, then we can now credit this
+    # Bookflow, thus getting access to the full version of the book. Note that this script
+    # uses Bookalope's REST API, and that requires a 'pro' credit.
+    http --ignore-stdin --json --print= --auth $TOKEN: POST $APIHOST/api/bookflows/$BOOKFLOWID/credit type="pro"
+
     # Upload the manuscript which automatically converts it using defaults. Note that the
     # `filetype` parameter here is optional; if unspecified then the Bookalope server will
     # attempt to determine the type of the uploaded file, and how to handle it.
@@ -82,7 +87,7 @@ if [ `builtin type -p http` ]; then
     # Regarding < /dev/tty see: https://github.com/jakubroztocil/httpie/issues/150#issuecomment-21419373
     echo "Converting and downloading books..."
     function convert_book {
-        local DOWNLOAD_URL=`http --ignore-stdin --print=b --auth $TOKEN: POST $APIHOST/api/bookflows/$BOOKFLOWID/convert format=$1 version=test < /dev/tty | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['download_url'])"`
+        local DOWNLOAD_URL=`http --ignore-stdin --print=b --auth $TOKEN: POST $APIHOST/api/bookflows/$BOOKFLOWID/convert format=$1 style=default < /dev/tty | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['download_url'])"`
         while true; do
             sleep 5
             STATUS=`http --ignore-stdin --print=b --auth $TOKEN: GET $DOWNLOAD_URL/status < /dev/tty | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['status']);"`
@@ -93,7 +98,7 @@ if [ `builtin type -p http` ]; then
                 echo "Bookalope failed to convert the book to $1, skipping"
                 break
                 ;;
-            "ok")
+            "available")
                 http --download --ignore-stdin --print= --auth $TOKEN: GET $DOWNLOAD_URL > /dev/tty
                 break
                 ;;
@@ -127,6 +132,12 @@ else
         read -r BOOKID BOOKFLOWID <<< `curl --silent --show-error --user $TOKEN: --header "Content-Type: application/json" --data '{"name":"'$DOCBASE'"}' --request POST $APIHOST/api/books | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['book']['id'], obj['book']['bookflows'][0]['id']);"`
         echo "Done, Book id=$BOOKID, Bookflow id=$BOOKFLOWID"
 
+        # If we've purchased a plan through the Bookalope website, then we can now credit this
+        # Bookflow, thus getting access to the full version of the book. Note that this script
+        # uses Bookalope's REST API, and that requires a 'pro' credit.
+        echo '{"type":"pro"}' > "$TMPDIR/$DOCNAME.json"  # Or "basic", depending on the plan.
+        curl --silent --show-error -output /dev/null --user $TOKEN: --header "Content-Type: application/json" --data @"$TMPDIR/$DOCNAME.json" --request POST $APIHOST/api/bookflows/$BOOKFLOWID/credit
+
         # Upload the manuscript which automatically converts it using defaults.
         echo "Uploading and analyzing book document..."
         echo '{"filetype":"'$DOCTYPE'", "filename":"'$DOCNAME'", "file":"' > "$TMPDIR/$DOCNAME.json"
@@ -153,7 +164,7 @@ else
         # Regarding < /dev/tty see: https://github.com/jakubroztocil/httpie/issues/150#issuecomment-21419373
         echo "Converting and downloading books..."
         function convert_book {
-            local DOWNLOAD_URL=`curl --silent --show-error --user $TOKEN: --header "Content-Type: application/json" --data '{"format":"'$1'", "version":"test"}' --request POST $APIHOST/api/bookflows/$BOOKFLOWID/convert < /dev/tty | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['download_url'])"`
+            local DOWNLOAD_URL=`curl --silent --show-error --user $TOKEN: --header "Content-Type: application/json" --data '{"format":"'$1'", "style":"default"}' --request POST $APIHOST/api/bookflows/$BOOKFLOWID/convert < /dev/tty | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['download_url'])"`
             while true; do
                 sleep 5
                 STATUS=`curl --silent --show-error --user $TOKEN: --header "Content-Type: application/json" --request GET $DOWNLOAD_URL/status < /dev/tty | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['status']);"`
@@ -164,7 +175,7 @@ else
                     echo "Bookalope failed to convert the book to $1, skipping"
                     break
                     ;;
-                "ok")
+                "available")
                     curl --silent --show-error --user $TOKEN: --remote-name --remote-header-name --request GET $DOWNLOAD_URL > /dev/tty
                     break
                     ;;

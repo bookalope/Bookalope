@@ -6,23 +6,24 @@
 APIHOST="https://bookflow.bookalope.net"
 APITOKEN=""
 
-# Generate and download either a "test" version of the ebook (free, but containing some scrambled
-# text) or its "final" version (paid for). Defaults to the test version.
-EBOOKVERSION="test"
+# Associate a credit with the conversion if one is available from the user's account. The credit
+# is required for a full ebook conversion (i.e. no scrambled text content). Note that this script
+# uses Bookalope's REST API, and that requires a 'pro' credit.
+EBOOKCREDIT=""
 
 # Parse the options and arguments of this script. We need to support the old version of
 # `getopt` as well as the updated one. More info: https://github.com/jenstroeger/Bookalope/issues/6
 getopt -T > /dev/null
 GETOPT=$?
 if [ $GETOPT -eq 4 ]; then
-    OPTIONS=`getopt --quiet --options hbo:kt:a:i:p:v: --longoptions help,beta,token:,keep,title:,author:,isbn:,publisher:,version: -- "$@"`
+    OPTIONS=`getopt --quiet --options hbo:kt:a:i:p:c: --longoptions help,beta,token:,keep,title:,author:,isbn:,publisher:,credit: -- "$@"`
     if [ $? -ne 0 ]; then
         echo "Error parsing command line options, exiting"
         exit 1
     fi
     eval set -- "$OPTIONS"
 else
-    OPTIONS=`getopt hbo:kt:a:i:p:v: $* 2> /dev/null`
+    OPTIONS=`getopt hbo:kt:a:i:p:c: $* 2> /dev/null`
     if [ $? -ne 0 ]; then
         echo "Error parsing command line options, exiting"
         exit 1
@@ -44,7 +45,7 @@ while true; do
             echo "  -a, --author author    Set the ebook's metadata: author."
             echo "  -i, --isbn isbn        Set the ebook's metadata: ISBN number."
             echo "  -p, --publisher pub    Set the ebook's metadata: publisher."
-            echo "  -v, --version version  Download 'test' or 'final' version of the ebook."
+            echo "  -c, --credit credit    Add a credit of type 'basic' or 'pro' to the Bookflow."
         else
             echo "  -h            Print this help and exit."
             echo "  -b            Use Bookalope's Beta server, not its production server."
@@ -54,7 +55,7 @@ while true; do
             echo "  -a author     Set the ebook's metadata: author."
             echo "  -i isbn       Set the ebook's metadata: ISBN number."
             echo "  -p publisher  Set the ebook's metadata: publisher."
-            echo "  -v version    Download 'test' or 'final' version of the ebook."
+            echo "  -c credit     Add a credit of type 'basic' or 'pro' to the Bookflow."
         fi
         echo -e "\nNote that the metadata of the original EPUB file overrides the command line options."
         exit 0
@@ -65,7 +66,7 @@ while true; do
         ;;
     -o | --token)
         APITOKEN="$2"
-        if [[ ! $APITOKEN =~ ^[0-9a-fA-F]{32}$ ]]; then
+        if [[ ! "$APITOKEN" =~ ^[0-9a-fA-F]{32}$ ]]; then
             echo "Malformed Bookalope API token, exiting"
             exit 1
         fi
@@ -91,10 +92,10 @@ while true; do
         METAPUBLISHER="$2"
         shift 2
         ;;
-    -v | --version)
-        EBOOKVERSION="$2"
-        if ! [[ "$EBOOKVERSION" =~ ^(test|final)$ ]]; then
-            echo "Version must be either 'test' (free) or 'final' (paid)."
+    -c | --credit)
+        EBOOKCREDIT="$2"
+        if [[ ! "$EBOOKCREDIT" =~ ^(basic|pro)$ ]]; then
+            echo "Conversion credit must be either 'basic' or 'pro'."
             exit 1
         fi
         shift 2
@@ -172,6 +173,12 @@ if [ `builtin type -p http` ]; then
     read -r BOOKID BOOKFLOWID <<< `http --ignore-stdin --json --print=b --auth $APITOKEN: POST $APIHOST/api/books name="$EBOOKBASE" title="$METATITLE" author="$METAAUTHOR" isbn="$METAISBN" publisher="$METAPUBLISHER" | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['book']['id'], obj['book']['bookflows'][0]['id']);"`
     echo "Done, Book id=$BOOKID, Bookflow id=$BOOKFLOWID"
 
+    # If we've purchased a plan through the Bookalope website, then we can now credit this
+    # Bookflow, thus getting access to the full version of the book.
+    if [ ! -z "$EBOOKCREDIT" ]; then
+        http --ignore-stdin --json --print= --auth $TOKEN: POST $APIHOST/api/bookflows/$BOOKFLOWID/credit type="$EBOOKCREDIT"
+    fi
+
     # Upload the ebook file which automatically ingests its content and styling. Passing the `skip_analysis`
     # argument here tells Bookalope to ignore the AI-assisted semantic structuring of the ebook, and instead
     # carry through the ebook's visual styles (AKA WYSIWYG conversion). The result is a flat and unstructured
@@ -197,8 +204,8 @@ if [ `builtin type -p http` ]; then
 
     # Convert the ingested ebook file to EPUB3 and download it.
     # Regarding < /dev/tty see: https://github.com/jakubroztocil/httpie/issues/150#issuecomment-21419373
-    echo "Converting to EPUB3 format in '$EBOOKVERSION' version, and downloading ebook file..."
-    DOWNLOAD_URL=`http --auth $APITOKEN: POST $APIHOST/api/bookflows/$BOOKFLOWID/convert format=epub3 version="$EBOOKVERSION" < /dev/tty | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['download_url'])"`
+    echo "Converting to EPUB3 format and downloading ebook file..."
+    DOWNLOAD_URL=`http --auth $APITOKEN: POST $APIHOST/api/bookflows/$BOOKFLOWID/convert format=epub3 style=default < /dev/tty | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['download_url'])"`
     while true; do
         wait 5
         STATUS=`http --auth $APITOKEN: GET $DOWNLOAD_URL/status < /dev/tty | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['status']);"`
@@ -209,7 +216,7 @@ if [ `builtin type -p http` ]; then
             echo "Bookalope failed to convert the ebook, exiting"
             exit 1
             ;;
-        "ok")
+        "available")
             echo "Waiting for Bookflow to finish, done!"
             break
             ;;
@@ -250,6 +257,13 @@ else
         read -r BOOKID BOOKFLOWID <<< `curl --silent --show-error --user $APITOKEN: --header "Content-Type: application/json" --data "{\"name\":\"$EBOOKBASE\",\"title\":\"$METATITLE\",\"author\":\"$METAAUTHOR\",\"isbn\":\"$METAISBN\",\"publisher\":\"$METAPUBLISHER\"}" --request POST $APIHOST/api/books | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['book']['id'], obj['book']['bookflows'][0]['id']);"`
         echo "Done, Book id=$BOOKID, Bookflow id=$BOOKFLOWID"
 
+        # If we've purchased a plan through the Bookalope website, then we can now credit this
+        # Bookflow, thus getting access to the full version of the book.
+        if [ ! -z "$EBOOKCREDIT" ]; then
+            echo '{"type":"'$EBOOKCREDIT'"}' > "$TMPDIR/$DOCNAME.json"
+            curl --silent --show-error -output /dev/null --user $TOKEN: --header "Content-Type: application/json" --data @"$TMPDIR/$DOCNAME.json" --request POST $APIHOST/api/bookflows/$BOOKFLOWID/credit
+        fi
+
         # Upload the ebook file which automatically ingests its content and styling. Passing the `skip_analysis`
         # argument here tells Bookalope to ignore the AI-assisted semantic structuring of the ebook, and instead
         # carry through the ebook's visual styles (AKA WYSIWYG conversion). The result is a flat and unstructured
@@ -277,8 +291,8 @@ else
 
         # Convert the ingested ebook file to EPUB3 and download it.
         # Regarding < /dev/tty see: https://github.com/jakubroztocil/httpie/issues/150#issuecomment-21419373
-        echo "Converting to EPUB3 format in '$EBOOKVERSION' version, and downloading ebook file..."
-        DOWNLOAD_URL=`curl --silent --show-error --user $APITOKEN: --header "Content-Type: application/json" --data '{"format":"epub3", "version":"$EBOOKVERSION"}' --request POST $APIHOST/api/bookflows/$BOOKFLOWID/convert < /dev/tty | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['download_url'])"`
+        echo "Converting to EPUB3 format and downloading ebook file..."
+        DOWNLOAD_URL=`curl --silent --show-error --user $APITOKEN: --header "Content-Type: application/json" --data '{"format":"epub3","style":"default"}' --request POST $APIHOST/api/bookflows/$BOOKFLOWID/convert < /dev/tty | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['download_url'])"`
         while true; do
             wait 5
             STATUS=`curl --silent --show-error --user $APITOKEN: --header "Content-Type: application/json" --request GET $DOWNLOAD_URL/status < /dev/tty | python3 -c "import json,sys;obj=json.load(sys.stdin);print(obj['status']);"`
@@ -289,7 +303,7 @@ else
                 echo "Bookalope failed to convert the ebook, exiting"
                 exit 1
                 ;;
-            "ok")
+            "available")
                 echo "Waiting for Bookflow to finish, done!"
                 break
                 ;;

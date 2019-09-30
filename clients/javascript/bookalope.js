@@ -129,8 +129,7 @@ BookalopeClient.prototype._httpRequest = function(url, method, params, options) 
             } else {
               // Unexpected JSON came back from the server.
             }
-          }
-          catch (e) {
+          } catch (e) {
             // JSON parse failed, so Bookalope responded with HTML. This is a known issue
             // with failed authorization for a request, and needs to be fixed server-side.
             if (this.status === 401) {
@@ -151,7 +150,7 @@ BookalopeClient.prototype._httpRequest = function(url, method, params, options) 
     xhr.setRequestHeader("Authorization", "Basic " + btoa(bookalope._token + ":"));
     xhr.setRequestHeader("Content-type", "application/json");
     // Set additional properties for the xhr instance.
-    Object.keys(options).map(function(key) {
+    Object.keys(options).forEach(function(key) {
       xhr[key] = options[key];
     });
     xhr.send(params ? JSON.stringify(params) : null);
@@ -174,17 +173,17 @@ BookalopeClient.prototype._httpRequest = function(url, method, params, options) 
 BookalopeClient.prototype.httpGET = function(url, params, options) {
 
   // URL encode parameters if this is a GET method.
+  var urlParams = "";
   if (params) {
     var keys = Object.keys(params);
     if (keys.length) {
-      var urlParams = keys.map(function (key) { // key => encode...
+      urlParams += "?" + keys.map(function(key) { // key => encode...
         return encodeURIComponent(key) + "=" + encodeURIComponent(params[key]);
       }).join("&");
-      url += "?" + urlParams;
     }
   }
 
-  return this._httpRequest(url, "GET", undefined, options || {});
+  return this._httpRequest(url + urlParams, "GET", undefined, options || {});
 };
 
 
@@ -303,7 +302,7 @@ BookalopeClient.prototype.getStyles = function(format) {
   return new Promise(function(resolve, reject) {
     var url = "/api/styles";
     var params = {
-      format: format
+      "format": format
     };
     bookalope.httpGET(url, params)
     .then(function(response) {
@@ -462,7 +461,7 @@ BookalopeClient.prototype.createBook = function(bookshelf, name) {
   return new Promise(function(resolve, reject) {
     var url = "/api/books";
     var params = {
-      name: name || "<none>"
+      "name": name || "<none>"
     };
     if (bookshelf) {
       params["bookshelf_id"] = bookshelf.id;
@@ -542,8 +541,8 @@ Profile.prototype.save = function() {
   return new Promise(function(resolve, reject) {
     var url = "/api/profile";
     var params = {
-      firstname: profile.firstname,
-      lastname: profile.lastname
+      "firstname": profile.firstname,
+      "lastname": profile.lastname
     };
     bookalope.httpPOST(url, params)
     .then(function(response) {
@@ -623,8 +622,7 @@ var Bookshelf = function(bookalope, idOrJson) {
     assert(isToken(idOrJson), "Malformed Bookalope token: " + idOrJson);
     this.id = idOrJson;
     this.url = "/api/bookhelves/" + this.id;
-  }
-  else {
+  } else {
     throw new BookalopeError("Unable to initialize Bookshelf, incorrect parameter");
   }
 };
@@ -680,8 +678,8 @@ Bookshelf.prototype.save = function() {
   return new Promise(function(resolve, reject) {
     var url = bookshelf.url;
     var params = {
-      name: this.name,
-      description: this.description
+      "description": this.description,
+      "name": this.name
     };
     bookalope.httpPOST(url, params)
     .then(function(response) {
@@ -728,7 +726,7 @@ Bookshelf.prototype.delete = function() {
  * @returns {Promise}
  */
 
-Bookshelf.prototype.addBook(book) {
+Bookshelf.prototype.addBook = function(book) {
   var bookshelf = this;
   return book.addToBookshelf(bookshelf);
 };
@@ -742,10 +740,10 @@ Bookshelf.prototype.addBook(book) {
  * @returns {Promise}
  */
 
-Bookshelf.prototype.removeBook(book) {
+Bookshelf.prototype.removeBook = function(book) {
   var bookshelf = this;
   return book.removeFromBookshelf();
-}
+};
 
 
 /**
@@ -784,8 +782,7 @@ var Book = function(bookalope, idOrJson) {
     assert(isToken(idOrJson), "Malformed Bookalope token: " + idOrJson);
     this.id = idOrJson;
     this.url = "/api/books/" + this.id;
-  }
-  else {
+  } else {
     throw new BookalopeError("Unable to initialize Book, incorrect parameter");
   }
 };
@@ -840,7 +837,7 @@ Book.prototype.save = function() {
   return new Promise(function(resolve, reject) {
     var url = book.url;
     var params = {
-      name: this.name
+      "name": this.name
     };
     bookalope.httpPOST(url, params)
     .then(function(response) {
@@ -896,7 +893,7 @@ Book.prototype.moveToBookshelf = function(bookshelf) {
   return new Promise(function(resolve, reject) {
     var url = book.url;
     var params = {
-      bookshelf_id: bookshelf.id
+      "bookshelf_id": bookshelf.id
     };
     bookalope.httpPOST(url, params)
     .then(function(response) {
@@ -924,7 +921,7 @@ Book.prototype.removeFromBookshelf = function() {
   return new Promise(function(resolve, reject) {
     var url = book.url;
     var params = {
-      bookshelf_id: undefined
+      "bookshelf_id": undefined
     };
     bookalope.httpPOST(url, params)
     .then(function(response) {
@@ -1014,9 +1011,7 @@ var Bookflow = function(bookalope, book, idOrJson) {
     assert(isToken(idOrJson), "Malformed Bookalope token: " + idOrJson);
     this.id = idOrJson;
     this.url = "/api/bookflows/" + this.id;
-    this.conversions = new Map();
-  }
-  else {
+  } else {
     throw new BookalopeError("Unable to initialize Bookflow, incorrect parameter");
   }
 };
@@ -1075,11 +1070,11 @@ Bookflow.prototype.save = function() {
   return new Promise(function(resolve, reject) {
     var url = bookflow.url;
     var params = {
-      name: bookflow.name
+      "name": bookflow.name
     };
     // Copy only valid metadata to the parameter array to update on the server.
     var metadata = bookflow.getMetadata();
-    Object.keys(metadata).map(function(key) {
+    Object.keys(metadata).forEach(function(key) {
       var value = metadata[key];
       if (value) {
         params[key] = value;
@@ -1145,13 +1140,13 @@ Bookflow.prototype.getWebURL = function() {
 
 Bookflow.prototype.getMetadata = function() {
   return {
-    title: this.title,
-    author: this.author,
-    copyright: this.copyright,
-    isbn: this.isbn,
-    language: this.language,
-    pubdate: this.pubdate,
-    publisher: this.publisher
+    "author": this.author,
+    "copyright": this.copyright,
+    "isbn": this.isbn,
+    "language": this.language,
+    "pubdate": this.pubdate,
+    "publisher": this.publisher,
+    "title": this.title
   };
 };
 
@@ -1186,10 +1181,10 @@ Bookflow.prototype.getImage = function(name) {
   return new Promise(function(resolve, reject) {
     var url = bookflow.url + "/files/image";
     var params = {
-      name: name
+      "name": name
     };
     var options = {
-      responseType: "blob",
+      "responseType": "blob"
     };
     bookalope.httpGET(url, params, options)
     .then(function(blob) {
@@ -1238,9 +1233,9 @@ Bookflow.prototype.addImage = function(name, filename, file) {
     } else {
       var url = bookflow.url + "/files/image";
       var params = {
-        name: name,
-        filename: filename,
-        file: btoa(file)
+        "file": btoa(file),
+        "filename": filename,
+        "name": name
       };
       bookalope.httpPOST(url, params)
       .then(function(response) {
@@ -1270,7 +1265,7 @@ Bookflow.prototype.getDocument = function() {
     var url = bookflow.url + "/files/document";
     var params = undefined;
     var options = {
-      responseType: "blob"
+      "responseType": "blob"
     };
     bookalope.httpGET(url, params, options)
     .then(function(blob) {
@@ -1309,16 +1304,16 @@ Bookflow.prototype.setDocument = function(filename, file, filetype, skip_analysi
     } else {
       var url = bookflow.url + "/files/document";
       var params = {
-        filename: filename,
-        file: btoa(file),
-        skip_analysis: skip_analysis || false,
+        "file": btoa(file),
+        "filename": filename,
+        "skip_analysis": skip_analysis || false
       };
       if (filetype && ["doc", "epub", "gutenberg"].includes(filetype)) {
         params["filetype"] = filetype;
       }
       bookalope.httpPOST(url, params)
       .then(function(response) {
-        bookflow.step = "processing";  // Server does the same.
+        bookflow.step = "processing"; // Server does the same.
         resolve(bookflow);
       })
       .catch(function(error) {
@@ -1363,9 +1358,9 @@ Bookflow.prototype.convert = function(format, style, version) {
     // has failed previously.
     var url = bookflow.url + "/convert";
     var params = {
-      format: format,
-      styling: style || "default",
-      version: version || "test"
+      "format": format,
+      "styling": style || "default",
+      "version": version || "test"
     };
     bookalope.httpPOST(url, params)
     .then(function(response) {
@@ -1403,9 +1398,9 @@ Bookflow.prototype.convert_status = function(format, style, version) {
     } else {
       var url = bookflow.url + "/download/" + conversion.download_id + "/status";
       var params = {
-        format: format,
-        styling: style || "default",
-        version: version || "test"
+        "format": format,
+        "styling": style || "default",
+        "version": version || "test"
       };
       bookalope.httpGET(url, params)
       .then(function(response) {
@@ -1446,12 +1441,12 @@ Bookflow.prototype.convert_download = function(format, style, version) {
     } else {
       var url = bookflow.url + "/download/" + conversion.download_id;
       var params = {
-        format: format,
-        styling: style || "default",
-        version: version || "test"
+        "format": format,
+        "styling": style || "default",
+        "version": version || "test"
       };
       var options = {
-        responseType: "blob"
+        "responseType": "blob"
       };
       bookalope.httpGET(url, params, options)
       .then(function(blob) {
@@ -1463,3 +1458,4 @@ Bookflow.prototype.convert_download = function(format, style, version) {
     }
   });
 };
+

@@ -574,8 +574,6 @@ class Bookflow {
         $this->language = NULL;
         $this->pubdate = NULL;
         $this->publisher = NULL;
-        // Associative array to track document conversions.
-        $this->conversions = array();
     }
 
     // Query the Bookalope server for this Bookflow's server-side data, and
@@ -704,53 +702,25 @@ class Bookflow {
         if ($this->step !== "convert") {
             throw new BookalopeException("Can't convert document, bookflow must be in 'convert' step");
         }
-        // Check if a conversion already exists and is maybe available.
-        $conversion_key = $format . "-" . $style->short_name;
-        if (array_key_exists($conversion_key, $this->conversions)) {
-            $conversion = $this->conversions[$conversion_key];
-            if ($conversion->status === "processing") {
-                // Conversion already in progress, do nothing.
-                return;
-            }
-            if ($conversion->status === "available") {
-                // Conversion has finished and download is available, do nothing.
-                return;
-            }
-        }
         // Initiate a new conversion on the server.
         $params = array(
             "format" => $format,
             "styling" => $style->short_name,
             );
         $conversion = $this->bookalope->http_post($this->url . "/convert", $params);
-        $this->conversions[$conversion_key] = $conversion;
     }
 
     // Return the status of the bookflow's file conversion for the specified
     // format and style.
-    public function convert_status($format, $style) {
-        $conversion_key = $format . "-" . $style->short_name;
-        if (array_key_exists($conversion_key, $this->conversions)) {
-            $conversion = $this->conversions[$conversion_key];
-            $conversion = $this->bookalope->http_get($this->url . "/download/" . $format . "/status");
-            return $conversion->status;
-        }
-        else {
-            return "none";
-        }
+    public function convert_status($format) {
+        $conversion = $this->bookalope->http_get($this->url . "/download/" . $format . "/status");
+        return $conversion->status;
     }
 
     // Once the convert_status() function returns 'available', the converted file can be
     // downloaded and is returned by this function.
-    public function convert_download($format, $style) {
-        $conversion_key = $format . "-" . $style->short_name;
-        if (array_key_exists($conversion_key, $this->conversions)) {
-            $conversion = $this->conversions[$conversion_key];
-            return $this->bookalope->http_get($this->url . "/download/" . $format);
-        }
-        else {
-            throw new BookalopeException("Bookflow has not been converted yet to " . $format);
-        }
+    public function convert_download($format) {
+        return $this->bookalope->http_get($this->url . "/download/" . $format);
     }
 }
 

@@ -914,7 +914,6 @@ class Bookflow(object):
         self.__language = None
         self.__pubdate = None
         self.__publisher = None
-        self.__conversions = dict()
 
     def __repr__(self):
         """Return a printable representation of this instance."""
@@ -1231,24 +1230,13 @@ class Bookflow(object):
         if self.step != "convert":
             raise BookflowError("Can't convert document, bookflow must be in 'convert' step")
         styling = style.short_name if style else "default"
-        # Check if a conversion already exists and is maybe available.
-        conversion_key = "{}-{}".format(format_, styling)
-        conversion = self.__conversions.get(conversion_key, None)
-        if conversion:
-            status = conversion["status"]
-            if status == "processing":
-                return  # Conversion already in progress, do nothing.
-            if status == "available":
-                return  # Conversion has finished and download is available, do nothing.
-        # Initiate a new conversion on the server.
         params = {
             "format": format_,
             "styling": styling,
             }
-        conversion = self.__bookalope.http_post(self.url + "/convert", params)
-        self.__conversions[conversion_key] = conversion
+        self.__bookalope.http_post(self.url + "/convert", params)
 
-    def convert_status(self, format_, style=None):
+    def convert_status(self, format_):
         """
         Check the status of the bookflow's file conversion for the specified format and style.
 
@@ -1257,28 +1245,17 @@ class Bookflow(object):
         :return: A string that is either 'processing', 'available' (conversion finished), 'failed',
                  or 'none' (no conversion initiated yet).
         """
-        styling = style.short_name if style else "default"
-        conversion_key = "{}-{}".format(format_, styling)
-        conversion = self.__conversions.get(conversion_key, None)
-        if conversion is None:
-            return "none"
         conversion = self.__bookalope.http_get(self.url + "/download/" + format_ + "/status")
         return conversion["status"]
 
-    def convert_download(self, format_, style=None):
+    def convert_download(self, format_):
         """
         Once `convert_status` method returns 'available', the converted file can be downloaded
         and is returned by this method.
 
         :param str format_: Same as `convert` method.
-        :param style: Same as `convert` method.
         :return: A bytes object containing the converted document, or None if converted document
                  was not available (any status but 'available').
         :raises: A HTTPException (Bad Request) if the conversion was not in 'available' status.
         """
-        styling = style.short_name if style else "default"
-        conversion_key = "{}-{}".format(format_, styling)
-        conversion = self.__conversions.get(conversion_key, None)
-        if conversion is None:
-            return None  # raise BookflowError?
         return self.__bookalope.http_get(self.url + "/download/" + format_)

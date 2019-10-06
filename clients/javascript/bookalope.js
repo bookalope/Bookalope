@@ -92,6 +92,11 @@ BookalopeClient.prototype._httpRequest = function(url, method, params, options) 
     xhr.open(method, bookalope._host + url);
     xhr.onload = function () {
 
+      // Make sure that this client and the server's API version match; if not, then throw an error.
+      if (this.getResponseHeader("X-Bookalope-Api-Version") !== "1.1.0") {
+        reject(new BookalopeError("Invalid API server version, please update this client"));
+      }
+
       // Status codes 1xx Informational responses.
       if (this.status < 200) {
         reject(new BookalopeError("Unexpected server response: " + this.statusText + " (" + this.status + ")"));

@@ -156,15 +156,19 @@ function wait() {
 # Use httpie to talk to the Bookalope server.
 if [ `builtin type -p http` ]; then
 
-    # Check if the server is alive and responding, and make sure that the Bookalope token authenticates
-    # correctly with the server.
-    APITEST=`http --headers --auth $APITOKEN: GET $APIHOST/api/profile`
+    # Check if the server is alive and responding, make sure that the Bookalope token authenticates
+    # correctly with the server, and that the API version is correct.
+    APITEST=`http --headers --auth $APITOKEN: HEAD $APIHOST/api/profile`
     if [ $? != 0 ]; then
         echo "Unable to connect to server $APIHOST, existing"
         exit 1
     fi
     if [ ! `echo "$APITEST" | grep HTTP | cut -d ' ' -f 2` == "200" ]; then
         echo "Wrong Bookalope API token, exiting"
+        exit 1
+    fi
+    if [ ! `echo "$APITEST" | grep X-Bookalope-Api-Version | cut -d ' ' -f 2` == "1.1.0" ]; then
+        echo "Invalid API server version, please update this client; exiting"
         exit 1
     fi
 
@@ -240,15 +244,19 @@ else
     # Use curl to talk to the Bookalope server.
     if [ `builtin type -p curl` ]; then
 
-        # Check if the server is alive and responding, and make sure that the Bookalope token authenticates
-        # correctly with the server.
-        APITEST=`curl --silent --show-error --user $APITOKEN: --request GET -s -D - -o /dev/null $APIHOST/api/profile`
+        # Check if the server is alive and responding, make sure that the Bookalope token authenticates
+        # correctly with the server, and that the API version is correct.
+        APITEST=`curl --silent --show-error --user $APITOKEN: --request HEAD -s -D - -o /dev/null $APIHOST/api/profile`
         if [ $? != 0 ]; then
             echo "Unable to connect to server $APIHOST, existing"
             exit 1
         fi
         if [ ! `echo "$APITEST" | grep HTTP | cut -d ' ' -f 2` == "200" ]; then
             echo "Wrong Bookalope API token, exiting"
+            exit 1
+        fi
+        if [ ! `echo "$APITEST" | grep X-Bookalope-Api-Version | cut -d ' ' -f 2` == "1.1.0" ]; then
+            echo "Invalid API server version, please update this client; exiting"
             exit 1
         fi
 

@@ -95,10 +95,12 @@ class BookalopeClient(object):
 
         :raises: An HTTP exception if the server responded with anything but
                  OK (200) or if the response contained unexpected header/body
-                 data.
+                 data; BookalopeError if there was a server version mismatch.
         """
         response = requests.get(self.__host + url, params=params, auth=(self.__token, ""))
         if response.status_code == requests.codes.ok:
+            if not response.headers["X-Bookalope-Api-Version"] == "1.1.0":
+                raise BookalopeError("Invalid API server version, please update this client")
             if response.headers["Content-Type"].startswith("application/json"):
                 return response.json()
             if response.headers["Content-Disposition"].startswith("attachment"):
@@ -119,10 +121,13 @@ class BookalopeClient(object):
         :returns: Depending on the response, either a dictionary or None.
 
         :raises: An HTTP exception if the server responded with anything but
-                 OK (200) or CREATED (201).
+                 OK (200) or CREATED (201); BookalopeError if there was a server
+                 version mismatch.
         """
         response = requests.post(self.__host + url, json=params, auth=(self.__token, ""))
         if response.status_code in [requests.codes.ok, requests.codes.created]:
+            if not response.headers["X-Bookalope-Api-Version"] == "1.1.0":
+                raise BookalopeError("Invalid API server version, please update this client")
             if int(response.headers["Content-Length"]):
                 # TODO: Check that Content-Type is JSON?
                 return response.json()
@@ -139,9 +144,12 @@ class BookalopeClient(object):
         :returns: None
 
         :raises: An HTTP exception if the server responded with anything but
-                 NO CONTENT (204).
+                 NO CONTENT (204); BookalopeError if there was a server version
+                 mismatch.
         """
         response = requests.delete(self.__host + url, auth=(self.__token, ""))
+        if not response.headers["X-Bookalope-Api-Version"] == "1.1.0":
+            raise BookalopeError("Invalid API server version, please update this client")
         if response.status_code == requests.codes.no_content:
             return None
         response.raise_for_status()

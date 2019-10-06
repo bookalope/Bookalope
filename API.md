@@ -100,7 +100,15 @@ Upon successful execution of a request, the return code of a response is one of 
         "status": "error"
     }
 
-Versioning of the API is currently not considered; options are using the URL or by extending the `Accept` request entry.
+### API Version
+
+At this point Bookalope does _not_ provide backwards compatible versioning, meaning that the server may break existing clients when breaking changes go live. Therefore, clients are required to check the `X-Bookalope-Api-Version` response header, and implement changes to that header value accordingly.
+
+    ~ > date
+    Sun Oct  6 10:15:02 AEST 2019
+    ~ > http --headers --auth token: head https://bookflow.bookalope.net/api/profile | grep X-Bookalope
+    X-Bookalope-Api-Version: 1.1.0
+    X-Bookalope-Version: 1.4.3
 
 ## User Profile
 

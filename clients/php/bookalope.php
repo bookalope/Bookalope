@@ -50,6 +50,7 @@ class BookalopeClient {
     // Private helper function that performs the actual http request, and returns
     // the response information.
     private function do_curl($verb, $url, $params=NULL) {
+        $api_version = NULL;
         $curl = curl_init();
         curl_setopt($curl, CURLOPT_URL, $this->host . $url);
         curl_setopt($curl, CURLOPT_USERPWD, $this->token . ":\"\"");
@@ -60,9 +61,18 @@ class BookalopeClient {
             curl_setopt($curl, CURLOPT_HTTPHEADER, array("Content-Type: application/json"));
             curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($params));
         }
+        curl_setopt($curl, CURLOPT_HEADERFUNCTION, function($curl, $header) use (&$api_version) {
+            list($name, $value) = explode(":", $header, 2);
+            if ($name === "X-Bookalope-Api-Version") {
+                $api_version = trim($value);
+            }
+        });
         $response = curl_exec($curl);
         $response_info = curl_getinfo($curl);
         curl_close($curl);
+        if ($api_version !== "1.1.0") {
+            throw new BookalopeException("Invalid API server version, please update this client");
+        }
         return array($response, $response_info);
     }
 

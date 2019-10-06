@@ -46,8 +46,14 @@ DOCBASE="${DOCNAME%.*}"
 if [ `builtin type -p http` ]; then
 
     # Check that the token authenticates correctly.
-    if [ ! `http --headers --auth $TOKEN: GET $APIHOST/api/profile | grep HTTP | cut -d ' ' -f 2` == "200" ]; then
+    if [ ! `http --headers --auth $TOKEN: HEAD $APIHOST/api/profile | grep HTTP | cut -d ' ' -f 2` == "200" ]; then
         echo "Wrong Bookalope API token, exiting"
+        exit 1
+    fi
+
+    # Check that the API version is correct.
+    if [ ! `http --headers --auth $TOKEN: HEAD $APIHOST/api/profile | grep X-Bookalope-Api-Version | cut -d ' ' -f 2` == "1.1.0" ]; then
+        echo "Invalid API server version, please update this client; exiting"
         exit 1
     fi
 
@@ -122,8 +128,14 @@ else
     if [ `builtin type -p curl` ]; then
 
         # Check that the token authenticates correctly.
-        if [ ! `curl --silent --show-error --user $TOKEN: --request GET -s -D - -o /dev/null $APIHOST/api/profile | grep HTTP | cut -d ' ' -f 2` == "200" ]; then
+        if [ ! `curl --silent --show-error --user $TOKEN: --request HEAD -s -D - -o /dev/null $APIHOST/api/profile | grep HTTP | cut -d ' ' -f 2` == "200" ]; then
             echo "Wrong Bookalope API token, exiting"
+            exit 1
+        fi
+
+        # Check that the API version is correct.
+        if [ ! `curl --silent --show-error --user $TOKEN: --request HEAD -s -D - -o /dev/null $APIHOST/api/profile | grep X-Bookalope-Api-Version | cut -d ' ' -f 2` == "1.1.0" ]; then
+            echo "Invalid API server version, please update this client; exiting"
             exit 1
         fi
 

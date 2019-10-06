@@ -59,6 +59,9 @@ sub make_request {
     }
     $response = $ua->request($request);
     if ($response->is_success) {
+        if ($response->header('X-Bookalope-Api-Version') ne '1.1.0') {
+            die 'Invalid API server version, please update this client';
+        }
         if (substr($response->header('Content-Type'), 0, 16) eq 'application/json') {
             my $json_body = $response->decoded_content;
             if ($json_body eq 'null') {

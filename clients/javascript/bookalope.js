@@ -916,6 +916,7 @@ Book.prototype.moveToBookshelf = function(bookshelf) {
     };
     bookalope.httpPOST(url, params)
     .then(function(response) {
+      book.bookshelf = bookshelf;
       resolve(book);
     })
     .catch(function(error) {
@@ -940,10 +941,11 @@ Book.prototype.removeFromBookshelf = function() {
   return new Promise(function(resolve, reject) {
     var url = book.url;
     var params = {
-      "bookshelf_id": undefined
+      "bookshelf_id": null
     };
     bookalope.httpPOST(url, params)
     .then(function(response) {
+      book.bookshelf = undefined;
       resolve(book);
     })
     .catch(function(error) {

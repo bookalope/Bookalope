@@ -471,7 +471,7 @@ BookalopeClient.prototype.getBooks = function() {
  * @returns {Promise}
  */
 
-BookalopeClient.prototype.createBook = function(bookshelf, name) {
+BookalopeClient.prototype.createBook = function(name, bookshelf) {
   var bookalope = this;
 
   return new Promise(function(resolve, reject) {

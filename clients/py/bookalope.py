@@ -252,7 +252,7 @@ class BookalopeClient(object):
         books = self.http_get("/api/books")
         return [Book(self, _) for _ in books["books"]]
 
-    def create_book(self, bookshelf=None, name=None):
+    def create_book(self, name=None, bookshelf=None):
         """
         Create a new Book instance with the given name. Note that the books has
         not been saved to the Bookalope server yet, and needs to be saved. The
@@ -264,7 +264,7 @@ class BookalopeClient(object):
         :param str name: An optional name for the new Book.
         :returns: A Book instance for the new book.
         """
-        return Book(self, bookshelf=bookshelf, name=name)
+        return Book(self, name=name, bookshelf=bookshelf)
 
 
 class Profile(object):
@@ -531,7 +531,7 @@ class Bookshelf(object):
         self.__description = bookshelf["description"]
         self.__created = datetime.datetime.strptime(bookshelf["created"], "%Y-%m-%dT%H:%M:%S")
         books = bookshelf["books"]
-        self.__books = [Book(self.__bookalope, self, _) for _ in books]
+        self.__books = [Book(self.__bookalope, _, bookshelf=self) for _ in books]
 
     def __repr__(self):
         """Return a printable representation of this instance."""
@@ -553,7 +553,7 @@ class Bookshelf(object):
         self.__name = bookshelf["name"]
         self.__description = bookshelf["description"]
         books = bookshelf["books"]
-        self.__books = [Book(self.__bookalope, self, _) for _ in books]
+        self.__books = [Book(self.__bookalope, _, bookshelf=self) for _ in books]
 
     def save(self):
         """
@@ -668,7 +668,7 @@ class Book(object):
     part of the Bookflow, not the Book itself.
     """
 
-    def __init__(self, bookalope, bookshelf=None, id_or_packed=None, name=None):
+    def __init__(self, bookalope, id_or_packed=None, name=None, bookshelf=None):
         """
         Create or initialize a new Book instance. The new Book instance is created
         on the Bookalope server and this instance is initialized with the new

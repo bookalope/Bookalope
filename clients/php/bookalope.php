@@ -341,7 +341,7 @@ class Bookshelf {
         $this->created = DateTime::createFromFormat("Y-m-d\TH:i:s", $bookshelf->created, new DateTimeZone("UTC"));
         $this->books = array();
         foreach ($bookshelf->books as $book) {
-            $this->books[] = new Book($this->bookalope, $this, $book);
+            $this->books[] = new Book($this->bookalope, $book, $this);
         }
     }
 
@@ -354,7 +354,7 @@ class Bookshelf {
         $this->description = $bookshelf->description;
         $this->books = array();
         foreach ($bookshelf->books as $book) {
-            $this->books[] = new Book($this->bookalope, $bookshelf, $book);
+            $this->books[] = new Book($this->bookalope, $book, $bookshelf);
         }
         return NULL;
     }
@@ -407,7 +407,7 @@ class Book {
     // bookflow are created; if it's a string then it's expected to be a valid
     // book id and the book is retrieved from the Bookalope server; if it's an
     // object then this instance is initialized based on it.
-    public function __construct($bookalope, $bookshelf=NULL, $id_or_packed=NULL) {
+    public function __construct($bookalope, $id_or_packed=NULL, $bookshelf=NULL) {
         assert($bookalope instanceof BookalopeClient);
         $this->bookalope = $bookalope;
         if ($id_or_packed === NULL) {

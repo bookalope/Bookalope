@@ -7,8 +7,8 @@ import base64
 import json
 import re
 import datetime
-import requests
 import babel
+import requests
 
 def _is_token(token_s):
     """
@@ -240,7 +240,7 @@ class BookalopeClient(object):
 
         :returns list: Returns a list of Bookshelf instances for this user.
         """
-        bookshelves = self.http_get("/api/bookshelves");
+        bookshelves = self.http_get("/api/bookshelves")
         return [Bookshelf(self, _) for _ in bookshelves["bookshelves"]]
 
     def get_books(self):

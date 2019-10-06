@@ -70,7 +70,7 @@
   Initiate the conversion of the bookflow’s document
   - [GET /api/bookflows/{id}/download/{format}/status](#get-bookflows-download-status)  
   Check the status of the conversion of the bookflow’s document
-  - [POST /api/bookflows/{id}/download/{format}](#get-bookflows-download)  
+  - [GET /api/bookflows/{id}/download/{format}](#get-bookflows-download)  
   Download the bookflow’s converted document
 
 ## Overview
@@ -1096,12 +1096,11 @@ Initiate the conversion of the bookflow’s document into a target format and st
     X-Content-Type-Options: nosniff
 
     {
-        "download_id": "211fc053a02d487cbb412c25fc7f8501",
-        "download_url": "https://bookflow.bookalope.net/bookflows/d441bf24d81b4f7a849fc77359f6d775/download/211fc053a02d487cbb412c25fc7f8501",
+        "download_url": "https://bookflow.bookalope.net/api/bookflows/d441bf24d81b4f7a849fc77359f6d775/download/211fc053a02d487cbb412c25fc7f8501",
         "status": "processing"
     }
 
-<a name="get-bookflows-download-status"></a>`GET https://bookflow.bookalope.net/bookflows/{id}/download/{format}/status`
+<a name="get-bookflows-download-status"></a>`GET https://bookflow.bookalope.net/api/bookflows/{id}/download/{format}/status`
 
 Get the current status of the converted document. Valid status values are `'processing'` (the document is currently converting), `'available'` (the document has been converted successfully and is ready for download), `'failed'` (the document failed to convert and can not be downloaded), and `'none'` (no conversion is available, and needs to be triggered by calling the `/convert` endpoint).
 
@@ -1111,8 +1110,8 @@ Note that the URL is the same as returned by the `/convert` endpoint!
 **Return:** Information about the document’s processing status.  
 **Errors:** n/a
 
-    ~ > http --auth token: --verbose GET https://bookflow.bookalope.net/bookflows/d441bf24d81b4f7a849fc77359f6d775/download/ebub3/status
-    GET /bookflows/d441bf24d81b4f7a849fc77359f6d775/download/epub3/status HTTP/1.1
+    ~ > http --auth token: --verbose GET https://bookflow.bookalope.net/api/bookflows/d441bf24d81b4f7a849fc77359f6d775/download/ebub3/status
+    GET /api/bookflows/d441bf24d81b4f7a849fc77359f6d775/download/epub3/status HTTP/1.1
     Accept: application/json, */*
     Accept-Encoding: gzip, deflate
     Authorization: Basic token
@@ -1133,7 +1132,7 @@ Note that the URL is the same as returned by the `/convert` endpoint!
         "status": "available"
     }
 
-<a name="get-bookflows-download"></a>`GET https://bookflow.bookalope.net/bookflows/{id}/download/{format}`
+<a name="get-bookflows-download"></a>`GET https://bookflow.bookalope.net/api/bookflows/{id}/download/{format}`
 
 Download the specified converted document.
 
@@ -1141,8 +1140,8 @@ Download the specified converted document.
 **Return:** The converted document attachment to the response.  
 **Errors:** `400` if the status of the conversion is anything else but `'available'`; `406` if the converted file is not (yet) available.
 
-    ~ > http --auth token: --verbose --download GET https://bookflow.bookalope.net/bookflows/d441bf24d81b4f7a849fc77359f6d775/download/211fc053a02d487cbb412c25fc7f8501
-    GET /bookflows/d441bf24d81b4f7a849fc77359f6d775/download/epub3 HTTP/1.1
+    ~ > http --auth token: --verbose --download GET https://bookflow.bookalope.net/api/bookflows/d441bf24d81b4f7a849fc77359f6d775/download/epub3
+    GET /api/bookflows/d441bf24d81b4f7a849fc77359f6d775/download/epub3 HTTP/1.1
     Accept: application/json, */*
     Accept-Encoding: identity
     Authorization: Basic token

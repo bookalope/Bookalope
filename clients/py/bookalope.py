@@ -168,6 +168,11 @@ class BookalopeClient(object):
             self.__host = "https://bookflow.bookalope.net"
 
     @property
+    def host(self):
+        """Return the host name of the Bookalope server that this client currently uses."""
+        return self.__host
+
+    @property
     def token(self):
         """Return the Bookalope auth token of this client instance, or None."""
         return self.__token

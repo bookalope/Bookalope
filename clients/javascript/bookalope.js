@@ -240,6 +240,17 @@ BookalopeClient.prototype.setHost = function(betaHost) {
 
 
 /**
+ * Get the host name of the Bookalope server that this client currently uses.
+ *
+ * @returns {string} The base URL of the server.
+ */
+
+BookalopeClient.prototype.getHost = function() {
+  return this._host;
+};
+
+
+/**
  * Set the Bookalope API authentication token.
  *
  * @param {string} newToken - API Token

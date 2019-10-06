@@ -133,6 +133,11 @@ class BookalopeClient {
         }
     }
 
+    // Get the host name of the Bookalope server that this client currently uses.
+    public function get_host() {
+        return $this->host;
+    }
+
     // Set the Bookalope authentication token.
     public function set_token($token) {
         if (!is_token($token)) {

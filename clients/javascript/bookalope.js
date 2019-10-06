@@ -468,6 +468,7 @@ BookalopeClient.prototype.getBooks = function() {
  *
  * @async
  * @param {string} name - The name for the new book.
+ * @param {Bookshelf} bookshelf - A Bookshelf instance to which the new Book belongs.
  * @returns {Promise}
  */
 
@@ -739,6 +740,7 @@ Bookshelf.prototype.delete = function() {
  * with the Bookshelf or rejected with a BookalopeError.
  *
  * @async
+ * @param {Book} book - A book instance that's added to this Bookshelf.
  * @returns {Promise}
  */
 
@@ -753,6 +755,7 @@ Bookshelf.prototype.addBook = function(book) {
  * fulfilled with the Bookshelf or rejected with a BookalopeError.
  *
  * @async
+ * @param {Book} book - A book instance that's removed from this Bookshelf.
  * @returns {Promise}
  */
 

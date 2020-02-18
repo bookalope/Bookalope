@@ -167,7 +167,8 @@ if [ `builtin type -p http` ]; then
         echo "Wrong Bookalope API token, exiting"
         exit 1
     fi
-    if [ ! `echo "$APITEST" | grep X-Bookalope-Api-Version | cut -d ' ' -f 2` == "1.1.0" ]; then
+    APIVER=`echo "$APITEST" | grep X-Bookalope-Api-Version | cut -d ' ' -f 2`
+    if [ ! "${APIVER//[$'\t\r\n ']}" == "1.1.0" ]; then
         echo "Invalid API server version, please update this client; exiting"
         exit 1
     fi
@@ -255,7 +256,8 @@ else
             echo "Wrong Bookalope API token, exiting"
             exit 1
         fi
-        if [ ! `echo "$APITEST" | grep X-Bookalope-Api-Version | cut -d ' ' -f 2` == "1.1.0" ]; then
+        APIVER=`echo "$APITEST" | grep X-Bookalope-Api-Version | cut -d ' ' -f 2`
+        if [ ! "${APIVER//[$'\t\r\n ']}" == "1.1.0" ]; then
             echo "Invalid API server version, please update this client; exiting"
             exit 1
         fi

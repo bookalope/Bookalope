@@ -52,7 +52,8 @@ if [ `builtin type -p http` ]; then
     fi
 
     # Check that the API version is correct.
-    if [ ! `http --headers --auth $TOKEN: HEAD $APIHOST/api/profile | grep X-Bookalope-Api-Version | cut -d ' ' -f 2` == "1.1.0" ]; then
+    APIVER=`http --headers --auth $TOKEN: HEAD $APIHOST/api/profile | grep X-Bookalope-Api-Version | cut -d ' ' -f 2`
+    if [ ! "${APIVER//[$'\t\r\n ']}" == "1.1.0" ]; then
         echo "Invalid API server version, please update this client; exiting"
         exit 1
     fi
@@ -134,7 +135,8 @@ else
         fi
 
         # Check that the API version is correct.
-        if [ ! `curl --silent --show-error --user $TOKEN: --request HEAD -s -D - -o /dev/null $APIHOST/api/profile | grep X-Bookalope-Api-Version | cut -d ' ' -f 2` == "1.1.0" ]; then
+        APIVER=`curl --silent --show-error --user $TOKEN: --request HEAD -s -D - -o /dev/null $APIHOST/api/profile | grep X-Bookalope-Api-Version | cut -d ' ' -f 2`
+        if [ ! "${APIVER//[$'\t\r\n ']}" == "1.1.0" ]; then
             echo "Invalid API server version, please update this client; exiting"
             exit 1
         fi

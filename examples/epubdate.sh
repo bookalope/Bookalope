@@ -121,6 +121,7 @@ if [ $# -ne 1 ]; then
     exit 1
 fi
 
+# Last entry in the command line must be the ebook file's path.
 EBOOKFILE=$1
 
 # Make sure that the ebook file actually exists, and that it's an EPUB file.

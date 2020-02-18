@@ -11,6 +11,12 @@ APITOKEN=""
 # uses Bookalope's REST API, and that requires a 'pro' credit.
 EBOOKCREDIT=""
 
+# Create a temporary work directory.
+TMPDIR=$(mktemp -d)
+
+# Make sure that we remove the temporary directory upon exit.
+trap "rm --recursive --force $TMPDIR" exit
+
 # Parse the options and arguments of this script. We need to support the old version of
 # `getopt` as well as the updated one. More info: https://github.com/jenstroeger/Bookalope/issues/6
 getopt -T > /dev/null
@@ -116,7 +122,6 @@ if [ $# -ne 1 ]; then
 fi
 
 EBOOKFILE=$1
-TMPDIR=$(mktemp -d)
 
 # Make sure that the ebook file actually exists, and that it's an EPUB file.
 if [ ! -f "$EBOOKFILE" ]; then
@@ -337,5 +342,4 @@ else
         exit 1
     fi
 fi
-rm -fr $TMPDIR
 exit 0

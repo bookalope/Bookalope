@@ -10,6 +10,9 @@ DOCFILE=$2
 DOCTYPE=${3:-"doc"}
 TMPDIR=$(mktemp -d)
 
+# Make sure that we remove the temporary directory upon exit.
+trap "rm --recursive --force $TMPDIR" exit
+
 # Make sure that the document actually exists.
 if [ ! -f "$DOCFILE" ]; then
     echo "Document $DOCFILE does not exist, exiting"
@@ -215,5 +218,4 @@ else
         exit 1
     fi
 fi
-rm -fr $TMPDIR
 exit 0

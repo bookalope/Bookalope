@@ -93,7 +93,7 @@ BookalopeClient.prototype._httpRequest = function(url, method, params, options) 
     xhr.onload = function () {
 
       // Make sure that this client and the server's API version match; if not, then throw an error.
-      if (this.getResponseHeader("X-Bookalope-Api-Version") !== "1.1.0") {
+      if (this.getResponseHeader("X-Bookalope-Api-Version") !== "1.2.0") {
         reject(new BookalopeError("Invalid API server version, please update this client"));
       }
 

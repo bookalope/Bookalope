@@ -70,7 +70,7 @@ class BookalopeClient {
         $response = curl_exec($curl);
         $response_info = curl_getinfo($curl);
         curl_close($curl);
-        if ($api_version !== "1.1.0") {
+        if ($api_version !== "1.2.0") {
             throw new BookalopeException("Invalid API server version, please update this client");
         }
         return array($response, $response_info);

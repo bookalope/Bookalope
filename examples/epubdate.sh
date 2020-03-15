@@ -174,7 +174,7 @@ if [ `builtin type -p http` ]; then
         exit 1
     fi
     APIVER=`echo "$APITEST" | grep X-Bookalope-Api-Version | cut -d ' ' -f 2`
-    if [ ! "${APIVER//[$'\t\r\n ']}" == "1.1.0" ]; then
+    if [ ! "${APIVER//[$'\t\r\n ']}" == "1.2.0" ]; then
         echo "Invalid API server version, please update this client; exiting"
         exit 1
     fi
@@ -263,7 +263,7 @@ else
             exit 1
         fi
         APIVER=`echo "$APITEST" | grep X-Bookalope-Api-Version | cut -d ' ' -f 2`
-        if [ ! "${APIVER//[$'\t\r\n ']}" == "1.1.0" ]; then
+        if [ ! "${APIVER//[$'\t\r\n ']}" == "1.2.0" ]; then
             echo "Invalid API server version, please update this client; exiting"
             exit 1
         fi

@@ -105,10 +105,10 @@ Upon successful execution of a request, the return code of a response is one of 
 At this point Bookalope does _not_ provide backwards compatible versioning, meaning that the server may break existing clients when breaking changes go live. Therefore, clients are required to check the `X-Bookalope-Api-Version` response header, and implement changes to that header value accordingly.
 
     ~ > date
-    Sun Oct  6 10:15:02 AEST 2019
+    Sun Mar 15 10:16:23 AEST 2020
     ~ > http --headers --auth token: head https://bookflow.bookalope.net/api/profile | grep X-Bookalope
-    X-Bookalope-Api-Version: 1.1.0
-    X-Bookalope-Version: 1.4.3
+    X-Bookalope-Api-Version: 1.2.0
+    X-Bookalope-Version: 1.4.6
 
 ## User Profile
 
@@ -987,14 +987,13 @@ Get two lists of supported import and export file formats that Bookalope support
             "export": [
                 {
                     "exts": [
-                        "epub",
                         "epub3"
                     ],
                     "mime": "application/epub+zip"
                 },
                 {
                     "exts": [
-                        "icml"
+                        "idml"
                     ],
                     "mime": "application/xml"
                 },
@@ -1069,7 +1068,7 @@ Get information about the available visual styles for one or for all target book
 
 Initiate the conversion of the bookflow’s document into a target format and styling.
 
-**Parameters**: The `format` (string) parameter determines which target format the book is to be converted into. The `format` is any of the export file name extensions returned by the `api/formats` call (i.e. `epub`, `epub3`, `mobi`, `pdf`, `icml`, or `docx`). The `styling` (string) parameter is optional and selects the style for the generated book; defaults to `default` which also is the only supported value at the moment. The `version` (string) parameter is optional and determines whether Bookalope generates a `test` or `final` version of the book; defaults to `test`.  
+**Parameters**: The `format` (string) parameter determines which target format the book is to be converted into. The `format` is any of the export file name extensions returned by the `api/formats` call (i.e. `epub`, `epub3`, `mobi`, `pdf`, `idml`, or `docx`). The `styling` (string) parameter is optional and selects the style for the generated book; defaults to `default` which also is the only supported value at the moment. The `version` (string) parameter is optional and determines whether Bookalope generates a `test` or `final` version of the book; defaults to `test`.  
 **Return**: A handle, URL, and current processing status of the converted document.  
 **Errors**: `406` if the bookflow step is anything other than `convert`. `409` if `version=final` and the user has no billing information or if the server explicitly disallows only `final`. `500` if a credit card charge failed.
 

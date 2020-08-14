@@ -997,7 +997,7 @@ Get two lists of supported import and export file formats that Bookalope support
                     "exts": [
                         "idml"
                     ],
-                    "mime": "application/xml"
+                    "mime": "application/vnd.adobe.indesign-idml-package"
                 },
                 ...
             ],
@@ -1070,7 +1070,7 @@ Get information about the available visual styles for one or for all target book
 
 Initiate the conversion of the bookflow’s document into a target format and styling.
 
-**Parameters**: The `format` (string) parameter determines which target format the book is to be converted into. The `format` is any of the export file name extensions returned by the `api/formats` call (i.e. `epub`, `epub3`, `mobi`, `pdf`, `idml`, or `docx`). The `styling` (string) parameter is optional and selects the style for the generated book; defaults to `default` which also is the only supported value at the moment. The `version` (string) parameter is optional and determines whether Bookalope generates a `test` or `final` version of the book; defaults to `test`.  
+**Parameters**: The `format` (string) parameter determines which target format the book is to be converted into. The `format` is any of the export file name extensions returned by the `api/formats` call (i.e. `epub`, `epub3`, `mobi`, `pdf`, `icml`, `idml`, or `docx`). The `styling` (string) parameter is optional and selects the style for the generated book; defaults to `default` which also is the only supported value at the moment. The `version` (string) parameter is optional and determines whether Bookalope generates a `test` or `final` version of the book; defaults to `test`.  
 **Return**: A handle, URL, and current processing status of the converted document.  
 **Errors**: `406` if the bookflow step is anything other than `convert`. `409` if `version=final` and the user has no billing information or if the server explicitly disallows only `final`. `500` if a credit card charge failed.
 

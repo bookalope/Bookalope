@@ -68,6 +68,8 @@
   Return styling information for all or a specific export file format
   - [POST /api/bookflows/{id}/convert](#post-bookflows-convert)  
   Initiate the conversion of the bookflow’s document
+  - [POST /api/bookflows/{id}/restart](#post-bookflows-restart)  
+  Restart the bookflow from scratch
   - [GET /api/bookflows/{id}/download/{format}/status](#get-bookflows-download-status)  
   Check the status of the conversion of the bookflow’s document
   - [GET /api/bookflows/{id}/download/{format}](#get-bookflows-download)  
@@ -782,7 +784,7 @@ Get the bookflow’s original document file, if it exists.
 
 Post the original document file for the given bookflow; if the bookflow has already a document file, then this call fails. This causes the Bookalope server to analyze the document and to extract content from it based on built-in heuristics. The interactive *Structure* and *Content* steps from the website are incorporated here, and the bookflow moves forward to the *Convert* step automatically as if the user clicked *Next* on the website.
 
-**Parameters**: `file` (string) is a base64 encoded text document. `filename` (string) is the original file name of the text document. `filetype` (string) is optional but must be one of `"doc"`, `"epub"`, or `"gutenberg"`, describing how the document file is to be interpreted by Bookalope; if `filetype` is missing then Bookalope attempts to figure out the file type itself.  `skip_analysis` (boolean) must be either `true` or `false` indicating whether Bookalope should ignore the results of structure and content analysis and produce a flat & semantically unstructured document (reusing the document’s original styling), or if the document should be structured properly (defaults to `false`) based on Bookalope’s semantic structure classification.  
+**Parameters**: `file` (string) is a base64 encoded text document. `filename` (string) is the original file name of the text document. `filetype` (string) is optional but must be one of `"doc"`, `"epub"`, or `"gutenberg"`, describing how the document file is to be interpreted by Bookalope; if `filetype` is missing then Bookalope attempts to figure out the file type itself. `skip_analysis` (boolean) must be either `true` or `false` indicating whether Bookalope should ignore the results of structure and content analysis and produce a flat & semantically unstructured document (reusing the document’s original styling), or if the document should be structured properly (defaults to `false`) based on Bookalope’s semantic structure classification. `beeline` (boolean) must be either `true` or `false` indicating whether to run the bookflow all the way to its `"convert"` step (`true`), or whether to stop at the `"structure"` step (`false`) for review.  
 **Return**: n/a  
 **Error**: `406` if the bookflow already contains a document or if the file type is unsupported, `413` if the posted document is too large (more than 12MB).
 
@@ -1098,6 +1100,38 @@ Initiate the conversion of the bookflow’s document into a target format and st
         "download_url": "https://bookflow.bookalope.net/api/bookflows/d441bf24d81b4f7a849fc77359f6d775/download/211fc053a02d487cbb412c25fc7f8501",
         "status": "processing"
     }
+
+<a name="post-bookflows-restart"></a>`POST https://bookflow.bookalope.net/api/bookflows/{id}/restart`
+
+Restart the specified bookflow, i.e. pretend that the bookflow’s original document was just uploaded and analyze it from scratch. Note that this endpoint switches the bookflow to `"processing"` until Bookalope has finished processing it.
+
+**Parameters**: The two accepted parameters `skip_analysis` and `beeline` are the same as for the [`POST /api/bookflows/{id}/files/document`](#post-bookflows-files-document) endpoint.  
+**Return**: n/a  
+**Errors**: `406` if the bookflow is currently processing or had no orginal document uploaded yet. `415` if the uploaded document is in an unsupported file format.
+
+    ~ > http --auth token: --verbose POST https://bookflow.bookalope.net/api/bookflows/d441bf24d81b4f7a849fc77359f6d775/restart
+    POST /api/bookflows/d441bf24d81b4f7a849fc77359f6d775/restart HTTP/1.1
+    Accept: application/json, */*
+    Accept-Encoding: gzip, deflate
+    Authorization: Basic token
+    Connection: keep-alive
+    Content-Length: 0
+    Content-Type: application/json
+    Host: bookflow.bookalope.net
+    User-Agent: HTTPie/2.2.0
+
+    HTTP/1.1 200 OK
+    Access-Control-Expose-Headers: X-Bookalope-Version, X-Bookalope-API-Version
+    Cache-Control: no-cache
+    Content-Length: 4
+    Content-Type: application/json
+    Date: Fri, 14 Aug 2020 07:03:59 GMT
+    Server: nginx/1.19.0
+    X-Bookalope-Api-Version: 1.2.0
+    X-Bookalope-Version: 1.5.0
+    X-Content-Type-Options: nosniff
+
+    null
 
 <a name="get-bookflows-download-status"></a>`GET https://bookflow.bookalope.net/api/bookflows/{id}/download/{format}/status`
 

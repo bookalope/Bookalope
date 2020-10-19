@@ -233,8 +233,7 @@ if [ `builtin type -p http` ]; then
             ;;
         esac
     done
-    http --download --ignore-stdin --print= --auth $APITOKEN: GET $DOWNLOAD_URL > /dev/tty
-    mv $BOOKFLOWID.epub "${EBOOKFILE%.*}-$BOOKFLOWID.epub"
+    http --download --output "${EBOOKFILE%.*}-$BOOKFLOWID.epub" --ignore-stdin --print= --auth $APITOKEN: GET $DOWNLOAD_URL > /dev/tty
     echo "Saved converted ebook to file ${EBOOKFILE%.*}-$BOOKFLOWID.epub"
 
     # Either delete the Bookflow and its files or keep them.
@@ -253,7 +252,7 @@ else
 
         # Check if the server is alive and responding, make sure that the Bookalope token authenticates
         # correctly with the server, and that the API version is correct.
-        APITEST=`curl --silent --show-error --user $APITOKEN: --request HEAD -s -D - -o /dev/null $APIHOST/api/profile`
+        APITEST=`curl --silent --show-error --user $APITOKEN: --head -s -D - -o /dev/null $APIHOST/api/profile`
         if [ $? != 0 ]; then
             echo "Unable to connect to server $APIHOST, existing"
             exit 1
@@ -325,8 +324,7 @@ else
                 ;;
             esac
         done
-        curl --silent --show-error --user $APITOKEN: --remote-name --remote-header-name --request GET $DOWNLOAD_URL > /dev/tty
-        mv $BOOKFLOWID.epub "${EBOOKFILE%.*}-$BOOKFLOWID.epub"
+        curl --silent --show-error --user $APITOKEN: --output "${EBOOKFILE%.*}-$BOOKFLOWID.epub" --request GET $DOWNLOAD_URL > /dev/tty
         echo "Saved converted ebook to file ${EBOOKFILE%.*}-$BOOKFLOWID.epub"
 
         # Either delete the Bookflow and its files or keep them.

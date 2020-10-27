@@ -907,9 +907,9 @@ Get the current content of a bookflow’s scratchpad.
 
 Post, i.e. add, update, or delete entries of a bookflow’s scratchpad. If they `key` does not yet exist, add the key-value pair; if the `key` already exists, update the value only; if a value is `null` then the key-value pair is deleted from the scratchpad. If the value is a list and the bookflow’s scratchpad contains a list with the same `key` then the list is appended to the existing one; else the value overrides the existing value.
 
-**Parameters**: A dictionary of key-value pairs, where keys are strings no longer than 128 characters and values must be either `null` or of type `boolean`, `number`, `string` no longer than 2048 characters, or a list of suchly typed values.  
+**Parameters**: A dictionary of key-value pairs, where keys are strings no longer than 128 characters and values must be either `null` or of type `boolean`, `number`, `string` no longer than 4096 characters. If a value is a list, then its elements must be either `null` or of type `boolean`, `number`, `string` no longer than 128 characters or a list of values of those simple types.  
 **Return**: n/a  
-**Errors**: n/a  
+**Errors**: `400` if the bookflow is currently processing or has failed to process.  
 
     ~ > http --json --auth token: --verbose POST http://localhost:6543/api/bookflows/36582d54166540638efc286e655fb657/scratchpad scratchpad:='{"foo":"bla"}'
     POST /api/bookflows/36582d54166540638efc286e655fb657/scratchpad HTTP/1.1
@@ -924,7 +924,8 @@ Post, i.e. add, update, or delete entries of a bookflow’s scratchpad. If they 
 
     {
         "scratchpad": {
-            "foo": "bla"
+            "foo": "bla",
+            "bar": [null, "string", [1, 2, 3]]
         }
     }
 
@@ -940,7 +941,7 @@ Delete and clear the content of a bookflow’s scratchpad. Note that Bookalope e
 
 **Parameters**: n/a  
 **Return**: n/a  
-**Errors**: n/a  
+**Errors**: `400` if the bookflow is currently processing or has failed to process.  
 
     ~ > http --json --auth token: --verbose DELETE http://localhost:6543/api/bookflows/36582d54166540638efc286e655fb657/scratchpad
     DELETE /api/bookflows/36582d54166540638efc286e655fb657/scratchpad HTTP/1.1

@@ -74,6 +74,8 @@
   Check the status of the conversion of the bookflow’s document
   - [GET /api/bookflows/{id}/download/{format}](#get-bookflows-download)  
   Download the bookflow’s converted document
+  - [DELETE /api/bookflows/{id}/download/{format}](#delete-bookflows-download)  
+  Delete the bookflow’s converted document
 
 ## Overview
 
@@ -1194,3 +1196,31 @@ Download the specified converted document.
 
     Downloading 15.61 kB to "d441bf24d81b4f7a849fc77359f6d775.epub"
     Done. 15.61 kB in 0.00051s (29.65 MB/s)
+
+<a name="delete-bookflows-download"></a>`DELETE https://bookflow.bookalope.net/api/bookflows/{id}/download/{format}`
+
+Delete the specified converted document. This is useful to change export options and convert a document again.
+
+**Parameters:** n/a  
+**Return:** n/a  
+**Errors:** `406` if the file wasn’t converted yet or if it’s not yet available.
+
+    ~ > http --verbose --auth token: DELETE https://bookflow.bookalope.net/api/bookflows/d441bf24d81b4f7a849fc77359f6d775/download/epub3
+    DELETE /api/bookflows/d441bf24d81b4f7a849fc77359f6d775/download/epub3 HTTP/1.1
+    Accept: */*
+    Accept-Encoding: gzip, deflate
+    Authorization: Basic token
+    Connection: keep-alive
+    Content-Length: 0
+    Host: bookflow.bookalope.net
+    User-Agent: HTTPie/2.2.0
+    
+    HTTP/1.1 204 No Content
+    Access-Control-Expose-Headers: X-Bookalope-API-Version, X-Bookalope-Version
+    Cache-Control: no-cache
+    Connection: close
+    Date: Tue, 18 Aug 2020 04:20:30 GMT
+    Server: nginx/1.19.0
+    X-Bookalope-Api-Version: 1.2.0
+    X-Bookalope-Version: 1.5.0
+    X-Content-Type-Options: nosniff

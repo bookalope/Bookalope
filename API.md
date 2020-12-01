@@ -581,7 +581,7 @@ Get the list of bookflow ids for the currect book.
 
 Post to create a new bookflow for the given book and return the new bookflow `id`.
 
-**Parameter**: The meta data parameters are a number of string parameters that can be passed to the resource when creating or modifying a bookflow: `name`, `title`, `author` (optional, default `""`), `language` (optional, default `en-US`), `copyright` (optional, default `""`), `pubdate` (optional, default is creation date), `isbn` (optional, default `""`), `publisher` (optional, default `""`).  
+**Parameter**: The meta data parameters are a number of string parameters that can be passed to the resource when creating or modifying a bookflow: `name`, `title`, `author` (optional, default `""`), `locale` (optional, default `en_US`), `copyright` (optional, default `""`), `pubdate` (optional, default is creation date), `isbn` (optional, default `""`), `publisher` (optional, default `""`), `a11y_certifiedby` and `a11y_summary` (optional, default `""`).  
 **Return**: Information about the new bookflow.  
 **Error**: n/a
 
@@ -643,22 +643,34 @@ Get all metadata for the bookflow with that id.
     
     {
         "bookflow": {
+            "a11y": {
+                "certifiedBy": "Bookalope",
+                "summary": null
+            },
             "author": "Joe Regular",
             "copyright": "",
             "credit": {
-                "formats": [
+                "export": [
                     "epub3",
                     "mobi",
                     "pdf"
                 ],
+                "import": [
+                    "doc",
+                ]
                 "type": "basic"
             },
             "id": "56b7f0c370ec4a78b1154f09c5934f13",
             "isbn": "000-0-00-000000-0",
-            "language": "en-US",
+            "locale": "en-US",
             "name": "Bookflow 1",
             "pubdate": "2015-09-18",
             "publisher": "",
+            "secondary-locales": [
+                "de_DE",
+                "en_GB",
+                "it_IT"
+            ],
             "step": "files",
             "title": "Funky Title"
         }

@@ -581,7 +581,7 @@ Get the list of bookflow ids for the currect book.
 
 Post to create a new bookflow for the given book and return the new bookflow `id`.
 
-**Parameter**: The meta data parameters are a number of string parameters that can be passed to the resource when creating or modifying a bookflow: `name`, `title`, `author` (optional, default `""`), `locale` (optional, default `en_US`), `copyright` (optional, default `""`), `pubdate` (optional, default is creation date), `isbn` (optional, default `""`), `publisher` (optional, default `""`), `a11y_certifiedby` and `a11y_summary` (optional, default `""`).  
+**Parameter**: The meta data parameters are a number of string parameters that can be passed to the resource when creating or modifying a bookflow: `name`, `title`, `author` (optional, default `""`), `locale` (optional, default `en_US`), `copyright` (optional, default `""`), `description` (optional, default `""`),  `pubdate` (optional, default is creation date), `isbn` (optional, default `""`), `publisher` (optional, default `""`), `a11y_certifiedby` and `a11y_summary` (optional, default `""`); `utm_source` and `utm_medium` and `utm_campaign` (optional, default `""`) are [Urchin Tracking Module (UTM) parameters](https://en.wikipedia.org/wiki/UTM_parameters) that allow you to track your readers’ use of external URLs in your ebook (this is an [_Enterprise_](https://bookalope.net/pricing.html) feature, and for more information please consult the [Tracking Link Use in Ebooks](https://github.com/bookalope/Bookalope/wiki/recipes#tracking-link-use-in-ebooks) in our user manual).  
 **Return**: Information about the new bookflow.  
 **Error**: n/a
 
@@ -660,6 +660,7 @@ Get all metadata for the bookflow with that id.
                 ]
                 "type": "basic"
             },
+            "description": null,
             "id": "56b7f0c370ec4a78b1154f09c5934f13",
             "isbn": "000-0-00-000000-0",
             "locale": "en-US",
@@ -672,7 +673,12 @@ Get all metadata for the bookflow with that id.
                 "it_IT"
             ],
             "step": "files",
-            "title": "Funky Title"
+            "title": "Funky Title",
+            "utm": {
+                "campaign": "link-tracking",
+                "medium": "0340822775",
+                "source": "ebook"
+            }
         }
     }
 
@@ -857,7 +863,7 @@ Get the bookflow’s cover image. If no cover image was provided yet, then one w
 
 Post an image with the given name or id for the bookflow. The only image currently supported is the cover image.
 
-**Parameters**: `name` (string) is the name or identifier for the image; this parameter is optional and defaults to `'cover-image'`, the book’s cover image. `caption` (string) is the caption for the image; this parameter is optional and if none is given then an existing caption for the image is removed. `file` (string) is the base64 encoded image. `filename` (string) is the original file name of the image.  
+**Parameters**: `name` (string) is the name or identifier for the image; this parameter is optional and defaults to `'cover-image'`, the book’s cover image. `alt` (string) is the alt text for the image; this parameter is optional and if none is given then an existing alt text for the image is removed. `file` (string) is the base64 encoded image. `filename` (string) is the original file name of the image.  
 **Return**: n/a  
 **Errors**: `400` if the image is not one of the supported formats (jpg, png, gif); `406` if the bookflow does not contain a document, or the document is not in `convert` step, or no image with the specified name existed; `413` if the posted document is too large (more than 12MB).  
 
@@ -1073,8 +1079,7 @@ Get information about the available visual styles for one or for all target book
             {
                 "info": {
                     "description": "Simple and functional Bookalope styling.",
-                    "name": "Default",
-                    "price-api": "9.95"
+                    "name": "Default"
                 },
                 "name": "default"
             }
@@ -1085,7 +1090,7 @@ Get information about the available visual styles for one or for all target book
 
 Initiate the conversion of the bookflow’s document into a target format and styling.
 
-**Parameters**: The `format` (string) parameter determines which target format the book is to be converted into. The `format` is any of the export file name extensions returned by the `api/formats` call (i.e. `epub`, `epub3`, `mobi`, `pdf`, `icml`, `idml`, or `docx`). The `styling` (string) parameter is optional and selects the style for the generated book; defaults to `default` which also is the only supported value at the moment. The `version` (string) parameter is optional and determines whether Bookalope generates a `test` or `final` version of the book; defaults to `test`.  
+**Parameters**: The `format` (string) parameter determines which target format the book is to be converted into. The `format` is any of the export file name extensions returned by the `api/formats` call (i.e. `epub`, `epub3`, `mobi`, `pdf`, `icml`, `idml`, or `docx`). The `style` (string) parameter is optional and selects the style for the generated book; defaults to `default` which also is the only supported value at the moment. The `version` (string) parameter is optional and determines whether Bookalope generates a `test` or `final` version of the book; defaults to `test`.  
 **Return**: A handle, URL, and current processing status of the converted document.  
 **Errors**: `406` if the bookflow step is anything other than `convert`. `409` if `version=final` and the user has no billing information or if the server explicitly disallows only `final`. `500` if a credit card charge failed.
 
@@ -1152,7 +1157,7 @@ Restart the specified bookflow, i.e. pretend that the bookflow’s original docu
 
 Get the current status of the converted document. Valid status values are `'processing'` (the document is currently converting), `'available'` (the document has been converted successfully and is ready for download), `'failed'` (the document failed to convert and can not be downloaded), and `'none'` (no conversion is available, and needs to be triggered by calling the `/convert` endpoint).
 
-Note that the URL is the same as returned by the `/convert` endpoint!
+Note that the download URL is the same as returned by the `/convert` endpoint!
 
 **Parameters:** n/a  
 **Return:** Information about the document’s processing status.  
@@ -1177,6 +1182,7 @@ Note that the URL is the same as returned by the `/convert` endpoint!
 
     {
         "download_url": "https://bookflow.bookalope.net/api/bookflows/3319a466eb7744449741dc90dd21e8ee/download/epub3",
+        "public_url": "https://bookflow.bookalope.net/public/SFUhwBkUx"
         "status": "available"
     }
 
